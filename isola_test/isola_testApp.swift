@@ -14,4 +14,8 @@ struct isola_testApp: App {
             ContentView()
         }
     }
+    
+    
+
 }
+

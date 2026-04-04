@@ -9,7 +9,7 @@ import SwiftUI
 
 struct QuestionView: View {
     // 使用 @Binding (來自父層狀態
-    // 不需要給它初始值（如false）因為是「借用」別人的
+    // 不需要給它初始值（如false）、因為是「借用」別人的
     @Binding var isPresented: Bool
     @State private var inputText = ""
     
