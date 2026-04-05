@@ -6,6 +6,7 @@
 //
 
 import SwiftUI
+import SwiftData
 
 @main
 struct isola_testApp: App {
@@ -13,9 +14,7 @@ struct isola_testApp: App {
         WindowGroup {
             ContentView()
         }
+        .modelContainer(for: DiaryEntry.self)
     }
-    
-    
-
 }
 
