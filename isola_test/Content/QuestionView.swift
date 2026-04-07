@@ -75,7 +75,7 @@ struct QuestionView: View {
             VStack(spacing: 25) {
                 if currentState == 0 {
                     // --- 第一階段：選擇心情 ---
-                    VStack(spacing: 40) {
+                    VStack(spacing: 30) {
                         Text("今天的心情如何？")
                             .font(.system(.title3, design: .serif))
                             .fontWeight(.medium)
@@ -87,13 +87,13 @@ struct QuestionView: View {
                                     Image(moodImages[index])
                                         .resizable()
                                         .scaledToFit()
-                                        .frame(width: 140, height: 140) // 稍微加大圖示
+                                        .frame(width: 190, height: 190) // 稍微加大圖示
                                         .transition(.scale.combined(with: .opacity))
                                     Text(moodName[index])
                                         .font(.system(.title3, design: .serif))
                                         .fontWeight(.medium)
                                         .foregroundStyle(.black.opacity(0.7))
-                                        .padding(.top,150)
+                                        .padding(.top,130)
                                 }
                             }
                         }
@@ -117,7 +117,7 @@ struct QuestionView: View {
                             withAnimation(.spring(response: 0.4, dampingFraction: 0.8)) {
                                 currentState = 1
                             }
-                            UIImpactFeedbackGenerator(style: .medium).impactOccurred()
+                            UIImpactFeedbackGenerator(style: .light).impactOccurred()
                         }) {
                             Text("下一步")
                                 .font(.system(.headline, design: .serif))
@@ -136,47 +136,63 @@ struct QuestionView: View {
                     )
                     
                 } else {
-                    // --- 第二階段：寫日記 ---
-                    VStack(spacing: 15) {
-                        Text(defaultQuestion)
-                            .font(.system(.headline, design: .serif))
-                            .multilineTextAlignment(.center)
-                            .fixedSize(horizontal: false, vertical: true)
-                            .foregroundColor(.black.opacity(0.7))
-                            .padding(.top, 20)
-                        
-                        TextEditor(text: $inputText)
-                            .font(.system(size: 18, design: .serif)) // 保持書寫感
-                            .scrollContentBackground(.hidden) // 隱藏原生白色背景
-                            .background(Color.clear) // 確保透明
-                            .lineSpacing(8)
-                            .padding(10)
-                            .frame(maxWidth: 300, maxHeight: .infinity)
-                            .foregroundColor(.black.opacity(0.8))
-                            .foregroundStyle(.black.opacity(0.8))
-                            .submitLabel(.done)
-                        
-                        Button(action: saveAndClose) {
-                            Text("封入瓶子")
-                                .font(.headline)
-                                .foregroundColor(.white)
-                                .frame(maxWidth: .infinity)
-                                .padding(.vertical, 14)
-                                .background(
-                                    Capsule()
-                                        .fill(inputText.isEmpty ? Color.gray.opacity(0.5) : Color.brown)
-                                )
-                        }
-                        .disabled(inputText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
-                        .padding(.bottom, 20)
-                    }
+                        // --- 第二階段：寫日記 ---
+                        VStack(spacing: 15) {
+                            Text(defaultQuestion)
+                                .font(.system(.headline, design: .serif))
+                                .multilineTextAlignment(.center)
+                                .fixedSize(horizontal: false, vertical: true)
+                                .foregroundColor(.black.opacity(0.7))
+                                .padding(.top, 20)
+                            
+        
+                            ZStack(alignment: .topLeading) {
+                                
+                                if inputText.isEmpty {
+                                    let tips = ["說說看發生了什麼", "是什麼讓你感到不愉快呢？", "今天有什麼特別的回憶嗎？", "寫下讓你開心的瞬間...", "今天真是太棒了，對吧！"]
+                                    
+                                    Text(tips[selectedMoodIndex])
+                                        .font(.system(size: 18, design: .serif))
+                                        .foregroundColor(.gray.opacity(0.5))
+                                        .padding(.horizontal, 15) // 對齊游標
+                                        .padding(.vertical, 18)
+                                        .allowsHitTesting(false)
+                                }
+                                
+                                // 輸入層
+                                TextEditor(text: $inputText)
+                                    .font(.system(size: 18, design: .serif))
+                                    .scrollContentBackground(.hidden)
+                                    .background(Color.clear)
+                                    .lineSpacing(8)
+                                    .padding(10)
+                                    .frame(maxWidth: 300, maxHeight: .infinity)
+                                    .foregroundColor(.black.opacity(0.8))
+                                    .submitLabel(.done)
+                            }
 
-                    .transition(
-                        .asymmetric(
-                            insertion: .scale(scale: 0.95).combined(with: .opacity),
-                            removal: .scale(scale: 1.05).combined(with: .opacity)
+                            .padding(.vertical, 10)
+                            
+                            Button(action: saveAndClose) {
+                                Text("封入瓶子")
+                                    .font(.headline)
+                                    .foregroundColor(.white)
+                                    .frame(maxWidth: .infinity)
+                                    .padding(.vertical, 14)
+                                    .background(
+                                        Capsule()
+                                            .fill(inputText.isEmpty ? Color.gray.opacity(0.5) : Color.brown)
+                                    )
+                            }
+                            .disabled(inputText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
+                            .padding(.bottom, 20)
+                        }
+                        .transition(
+                            .asymmetric(
+                                insertion: .scale(scale: 0.95).combined(with: .opacity),
+                                removal: .scale(scale: 1.05).combined(with: .opacity)
+                            )
                         )
-                    )
                 }
             }
             .padding(30)

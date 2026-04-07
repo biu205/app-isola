@@ -27,7 +27,7 @@ struct HomeView: View {
                 Color.black.opacity(0.15)
                     .ignoresSafeArea()
                     .onTapGesture {
-                        withAnimation { isShowingQuestion = false }
+                        dismissKeyboard()
                     }
                 
                 // 3. 上層：問題視窗 (情緒入口)
@@ -63,8 +63,7 @@ struct SeaSceneView: View {
                 guard let background = context.resolveSymbol(id: "bg"),
                       let island = context.resolveSymbol(id: "island"),
                       let bottle = context.resolveSymbol(id: "bottle"),
-                      let trashcan = context.resolveSymbol(id: "trashcan"),
-                      let sun = context.resolveSymbol(id: "sun")
+                      let trashcan = context.resolveSymbol(id: "trashcan")
                 else { return }
                 
                 let midY = size.height / 2
@@ -83,8 +82,6 @@ struct SeaSceneView: View {
                 // 小島
                 context.draw(island, at: CGPoint(x: centerX, y: midY))
                 
-                // 太陽
-                context.draw(sun, at: CGPoint(x: centerX - 100, y: midY - 200))
                 // 瓶子
                 let bottleY = midY + 150 + sin(time * 1.3) * 10
                 context.draw(bottle, at: CGPoint(x: centerX + 80, y: bottleY + 70))
@@ -95,7 +92,6 @@ struct SeaSceneView: View {
                 
             } symbols: {
                 Image("background").tag("bg")
-                Image("sun").resizable().frame(width: 135, height: 150).tag("sun")
                 Image("sea").tag("sea")
                 Image("dark").tag("dark")
                 Image("light").tag("light")
@@ -135,6 +131,13 @@ struct SeaSceneView: View {
         context.draw(img, at: CGPoint(x: offset, y: yPos))
         context.draw(img, at: CGPoint(x: offset - imgW, y: yPos))
     }
+}
+//MARK: - 取消鍵盤函數
+private func dismissKeyboard() {
+    UIApplication.shared.sendAction(#selector(UIResponder.resignFirstResponder),
+                                    to: nil,
+                                    from: nil,
+                                    for: nil)
 }
 //MARK: - Preview區塊
 #Preview {

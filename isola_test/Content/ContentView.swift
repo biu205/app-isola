@@ -7,25 +7,25 @@ struct ContentView: View {
             HomeView()
                 .tabItem {
                     Image(systemName: "apple.meditate")
-                    Text("Home")
+                    Text("首頁")
                 }
             // 第二個標籤
             Backpack()
                 .tabItem {
                     Image(systemName: "bookmark")
-                    Text("Backpack")
+                    Text("背包")
                 }
              
             // 第三個標籤
             First_aid_Kit()
                 .tabItem {
                     Image(systemName: "books.vertical")
-                    Text("First Aid Kit")
+                    Text("急救箱")
                 }
             HRV()
                 .tabItem {
                     Image(systemName: "heart.fill")
-                    Text("HRV")
+                    Text("月報")
                 }
         }
     }
