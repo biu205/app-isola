@@ -25,3 +25,5 @@ class DiaryEntry {
         self.moodIndex = moodIndex
     }
 }
+
+
