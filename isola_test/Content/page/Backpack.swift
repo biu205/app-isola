@@ -5,11 +5,20 @@ struct Backpack: View {
     @State private var currentMonth: Date = Date()
     // 新增：控制選擇器彈出的狀態
     @State private var showDatePicker = false
-    
+    @Environment(\.modelContext) private var modelContext
+
     // 新增：用於選擇器內部的暫存狀態
     @State private var selectedYear: Int = 2026
     @State private var selectedMonth: Int = 4
-    
+    // 自動抓取資料，依日期排序
+    @Query(sort: \DiaryEntry.date, order: .reverse) private var entries: [DiaryEntry]
+
+    // 編輯狀態
+    @State private var entryToEdit: DiaryEntry?
+
+    // 💡 為了維持一致性，這裡定義與 QuestionView 相同的對應表
+    let moodImages = ["非常不愉快度Ｑ", "不愉快度Ｑ", "度Ｑ", "愉快度Ｑ", "非常愉快度Ｑ"]
+    let moodNames = ["非常不愉快", "不愉快", "一般", "愉快", "非常愉快"]
     private let calendar = Calendar.current
     private let columns = Array(repeating: GridItem(.flexible(), spacing: 10), count: 7)
 
@@ -30,7 +39,72 @@ struct Backpack: View {
             
             Spacer()
         }
-        .background(Color(hex: "#fafafa").ignoresSafeArea())
+        NavigationStack {
+            ZStack {
+                Color(UIColor.systemGroupedBackground)
+                    .ignoresSafeArea()
+
+                if entries.isEmpty {
+                    VStack(spacing: 12) {
+                        Image(systemName: "backpack.fill")
+                            .font(.system(size: 60))
+                            .foregroundColor(.gray.opacity(0.4))
+                        Text("背包裡空空的")
+                            .font(.headline)
+                            .foregroundColor(.secondary)
+                        Text("去海灘撿個瓶子寫下今天的心情吧！")
+                            .font(.caption)
+                            .foregroundColor(.secondary)
+                    }
+                } else {
+                    List {
+                        ForEach(entries) { entry in
+                            Button {
+                                entryToEdit = entry
+                            } label: {
+                                HStack(spacing: 16) {
+                                    // 💡 亮點：顯示當時選的心情度Ｑ
+                                    // 這裡做一個安全防護，確保 Index 不會越界
+                                    let moodIndex = max(0, min(4, entry.moodIndex))
+
+                                    Image(moodImages[moodIndex])
+                                        .resizable()
+                                        .scaledToFit()
+                                        .frame(width: 48, height: 48)
+                                        .background(Circle().fill(Color.white.opacity(0.6))) // 輕微底色讓圖示更突出
+
+                                    VStack(alignment: .leading, spacing: 6) {
+                                        HStack {
+                                            Text(entry.title)
+                                                .font(.system(.headline, design: .serif))
+                                                .foregroundColor(.primary)
+                                            Spacer()
+                                            Text(entry.date, format: .dateTime.month().day())
+                                                .font(.caption)
+                                                .foregroundColor(.secondary)
+                                        }
+
+                                        // 顯示內容摘要與心情文字
+                                        Text("[\(moodNames[moodIndex])] \(entry.content)")
+                                            .font(.subheadline)
+                                            .foregroundColor(.secondary)
+                                            .lineLimit(1) // 保持背包整潔，只顯示一行
+                                    }
+                                }
+                                .padding(.vertical, 4)
+                            }
+                        }
+                        .onDelete(perform: deleteEntries)
+                    }
+                }
+            }
+            
+            .sheet(item: $entryToEdit) { entry in
+                EditDiaryView(entry: entry)
+            }
+        }
+        
+        .background(Color(hex: "#FFFCF1").ignoresSafeArea())
         // 核心功能：原生半屏選擇器
         .sheet(isPresented: $showDatePicker) {
             MonthYearPickerView(
@@ -48,6 +122,15 @@ struct Backpack: View {
             .presentationDragIndicator(.visible)
         }
     }
+    private func deleteEntries(offsets: IndexSet) {
+        withAnimation {
+            for index in offsets {
+                modelContext.delete(entries[index])
+            }
+            UIImpactFeedbackGenerator(style: .medium).impactOccurred()
+        }
+    }
+
 }
 
 // MARK: - UI 組件拆分
@@ -72,6 +155,7 @@ private extension Backpack {
                 Text(day)
                     .font(.system(size: 16, weight: .bold, design: .serif))
                     .foregroundStyle(.secondary)
+                    .foregroundStyle(Color(hex: "#000000"))
                     .frame(maxWidth: .infinity)
                     .padding(.vertical, 15)
             }
@@ -90,18 +174,21 @@ private extension Backpack {
             
             Spacer()
             
-            // 核心優化：將文字改為按鈕，點擊開啟選擇器
-            Button(action: {
-                // 打開前，先將滾輪對齊目前的年月
-                selectedYear = calendar.component(.year, from: currentMonth)
-                selectedMonth = calendar.component(.month, from: currentMonth)
-                showDatePicker = true
-            }) {
-                Text(monthString(from: currentMonth))
-                    .font(.system(size: 32, weight: .medium, design: .serif))
-                    .tracking(4)
-                    .foregroundColor(.black)
-            }
+            Text(monthString(from: currentMonth))
+                .font(.system(size: 32, weight: .medium, design: .serif))
+                .tracking(4)
+                .foregroundColor(.black)
+                .onTapGesture(count: 2) {
+                    let now = Date()
+                    currentMonth = now
+                    selectedYear = calendar.component(.year, from: now)
+                    selectedMonth = calendar.component(.month, from: now)
+                }
+                .onTapGesture {
+                    selectedYear = calendar.component(.year, from: currentMonth)
+                    selectedMonth = calendar.component(.month, from: currentMonth)
+                    showDatePicker = true
+                }
             
             Spacer()
             
@@ -188,7 +275,7 @@ struct MonthYearPickerView: View {
     @Environment(\.dismiss) var dismiss // 用於關閉 Sheet
     
     // 預設年份範圍 (例如：往前 10 年，往後 10 年)
-    let years = Array(2015...2035)
+    let years = Array(2000...2099)
     let months = Array(1...12)
     
     var body: some View {
@@ -229,13 +316,69 @@ struct MonthYearPickerView: View {
                 .pickerStyle(.wheel)
             }
             // 使用你的主題色點綴
-            .background(Color(hex: "#FDF9E7").opacity(0.5))
+            .background(Color(hex: "#DADADA").opacity(0.01))
             .clipShape(RoundedRectangle(cornerRadius: 16))
             .padding(.horizontal)
             
             Spacer()
         }
         .padding(.top, 10)
+    }
+}
+// MARK: - 編輯日記列表
+struct EditDiaryView: View {
+    @Environment(\.dismiss) private var dismiss
+    @Bindable var entry: DiaryEntry
+
+    let moodImages = ["非常不愉快度Ｑ", "不愉快度Ｑ", "度Ｑ", "愉快度Ｑ", "非常愉快度Ｑ"]
+    let moodNames = ["非常不愉快", "不愉快", "一般", "愉快", "非常愉快"]
+
+    var body: some View {
+        NavigationStack {
+            Form {
+                // 💡 新增：顯示當時的心情狀態（不可修改，作為回憶標籤）
+                Section(header: Text("當時的心情")) {
+                    HStack(spacing: 15) {
+                        Image(moodImages[max(0, min(4, entry.moodIndex))])
+                            .resizable()
+                            .scaledToFit()
+                            .frame(width: 60, height: 60)
+
+                        VStack(alignment: .leading) {
+                            Text(moodNames[max(0, min(4, entry.moodIndex))])
+                                .font(.headline)
+                            Text(entry.date, style: .date)
+                                .font(.caption)
+                                .foregroundColor(.secondary)
+                        }
+                    }
+                    .padding(.vertical, 8)
+                }
+
+                Section(header: Text("題目")) {
+                    Text(entry.title)
+                        .foregroundColor(.secondary)
+                        .font(.subheadline)
+                }
+
+                Section(header: Text("內容")) {
+                    TextEditor(text: $entry.content)
+                        .frame(minHeight: 250)
+                        .font(.body)
+                        .lineSpacing(6)
+                }
+            }
+            .navigationTitle("編輯日記")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .navigationBarTrailing) {
+                    Button("完成") {
+                        dismiss()
+                    }
+                    .fontWeight(.bold)
+                }
+            }
+        }
     }
 }
 
@@ -252,3 +395,7 @@ extension Color {
 #Preview {
     Backpack()
 }
+
+
+
+
