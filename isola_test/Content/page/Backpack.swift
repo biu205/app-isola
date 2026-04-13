@@ -23,105 +23,104 @@ struct Backpack: View {
     private let columns = Array(repeating: GridItem(.flexible(), spacing: 10), count: 7)
 
     var body: some View {
-        VStack(spacing: 0) {
-            dynamicYearHeader
-                .padding(.top, 40)
-                .padding(.bottom, 10)
-            
-            monthHeader
-                .padding(.top, 0)
-                .padding(.bottom, 20)
-            
-            weekdayHeader
-            
-            calendarGrid
-                .padding(.horizontal, 20)
-            
-            Spacer()
-        }
-        NavigationStack {
-            ZStack {
-                Color(UIColor.systemGroupedBackground)
-                    .ignoresSafeArea()
+            // 核心優化：將月曆與列表統一放進同一個 VStack 管理
+            VStack(spacing: 0) {
+                // 1. 頂部導航與月份標題
+                dynamicYearHeader
+                    .padding(.top, 40)
+                    .padding(.bottom, 10)
+                
+                monthHeader
+                    .padding(.top, 0)
+                    .padding(.bottom, 20)
+                
+                // 2. 星期標題列
+                weekdayHeader
+                
+                // 3. 真實的日曆網格
+                calendarGrid
+                    .padding(.horizontal, 20)
+                
+                // 4. 下半部：日記背包列表 (取代了原本的 Spacer 和 NavigationStack)
+                ZStack {
+                    
+                    // 這裡可以統一用你的主題色，或者保留系統群組色
+                    Color(hex: "#FFFCF1")
+                        .ignoresSafeArea(edges: .bottom)
 
-                if entries.isEmpty {
-                    VStack(spacing: 12) {
-                        Image(systemName: "backpack.fill")
-                            .font(.system(size: 60))
-                            .foregroundColor(.gray.opacity(0.4))
-                        Text("背包裡空空的")
-                            .font(.headline)
-                            .foregroundColor(.secondary)
-                        Text("去海灘撿個瓶子寫下今天的心情吧！")
-                            .font(.caption)
-                            .foregroundColor(.secondary)
-                    }
-                } else {
-                    List {
-                        ForEach(entries) { entry in
-                            Button {
-                                entryToEdit = entry
-                            } label: {
-                                HStack(spacing: 16) {
-                                    // 💡 亮點：顯示當時選的心情度Ｑ
-                                    // 這裡做一個安全防護，確保 Index 不會越界
-                                    let moodIndex = max(0, min(4, entry.moodIndex))
-
-                                    Image(moodImages[moodIndex])
-                                        .resizable()
-                                        .scaledToFit()
-                                        .frame(width: 48, height: 48)
-                                        .background(Circle().fill(Color.white.opacity(0.6))) // 輕微底色讓圖示更突出
-
-                                    VStack(alignment: .leading, spacing: 6) {
-                                        HStack {
-                                            Text(entry.title)
-                                                .font(.system(.headline, design: .serif))
-                                                .foregroundColor(.primary)
-                                            Spacer()
-                                            Text(entry.date, format: .dateTime.month().day())
-                                                .font(.caption)
-                                                .foregroundColor(.secondary)
-                                        }
-
-                                        // 顯示內容摘要與心情文字
-                                        Text("[\(moodNames[moodIndex])] \(entry.content)")
-                                            .font(.subheadline)
-                                            .foregroundColor(.secondary)
-                                            .lineLimit(1) // 保持背包整潔，只顯示一行
-                                    }
-                                }
-                                .padding(.vertical, 4)
-                            }
+                    if entries.isEmpty {
+                        VStack(spacing: 12) {
+                            Image(systemName: "backpack.fill")
+                                .font(.system(size: 60))
+                                .foregroundColor(.gray.opacity(0.4))
+                            Text("背包裡空空的")
+                                .font(.headline)
+                                .foregroundColor(.secondary)
+                            Text("去海灘撿個瓶子寫下今天的心情吧！")
+                                .font(.caption)
+                                .foregroundColor(.secondary)
                         }
-                        .onDelete(perform: deleteEntries)
+                    } else {
+                        List {
+                            ForEach(entries) { entry in
+                                Button {
+                                    entryToEdit = entry
+                                } label: {
+                                    HStack(spacing: 16) {
+                                        let moodIndex = max(0, min(4, entry.moodIndex))
+                                        // 記得確保你有把這些圖片放進 Assets 裡
+                                        Image(moodImages[moodIndex])
+                                            .resizable()
+                                            .scaledToFit()
+                                            .frame(width: 48, height: 48)
+                                            .background(Circle().fill(Color.white.opacity(0.6)))
+                                        
+                                        VStack(alignment: .leading, spacing: 6) {
+                                            HStack {
+                                                Text(entry.title)
+                                                    .font(.system(.headline, design: .serif))
+                                                    .foregroundColor(.primary)
+                                                Spacer()
+                                                Text(entry.date, format: .dateTime.month().day())
+                                                    .font(.caption)
+                                                    .foregroundColor(.secondary)
+                                            }
+                                            
+                                            Text("[\(moodNames[moodIndex])] \(entry.content)")
+                                                .font(.subheadline)
+                                                .foregroundColor(.secondary)
+                                                .lineLimit(1)
+                                        }
+                                    }
+                                    .padding(.vertical, 4)
+                                }
+                            }
+                            .onDelete(perform: deleteEntries)
+                        }
+                        .listStyle(.plain) // 💡 競賽加分亮點：移除 List 預設的醜陋灰色背景，讓它完美融入你的 App 視覺
+                      
                     }
-                }
+                }  .padding(.top,40)
             }
+        
+            .background(Color(hex: "#FFFCF1").ignoresSafeArea())
             
+            // 所有的彈出視窗 (Sheet) 統一掛在最外層的 VStack 上
             .sheet(item: $entryToEdit) { entry in
                 EditDiaryView(entry: entry)
             }
+            .sheet(isPresented: $showDatePicker) {
+                MonthYearPickerView(
+                    selectedYear: $selectedYear,
+                    selectedMonth: $selectedMonth,
+                    onConfirm: {
+                        updateCurrentMonth()
+                    }
+                )
+                .presentationDetents([.height(320)])
+                .presentationDragIndicator(.visible)
+            }
         }
-        
-        .background(Color(hex: "#FFFCF1").ignoresSafeArea())
-        // 核心功能：原生半屏選擇器
-        .sheet(isPresented: $showDatePicker) {
-            MonthYearPickerView(
-                selectedYear: $selectedYear,
-                selectedMonth: $selectedMonth,
-                onConfirm: {
-                    updateCurrentMonth()
-                }
-                
-
-            )
-            // 競賽加分亮點：完美控制半屏高度
-
-            .presentationDetents([.height(320)])
-            .presentationDragIndicator(.visible)
-        }
-    }
     private func deleteEntries(offsets: IndexSet) {
         withAnimation {
             for index in offsets {
