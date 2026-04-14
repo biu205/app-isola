@@ -65,7 +65,7 @@ struct HomeView: View {
                     }
 
                     // 按鈕 2：設定
-                    NavigationLink(destination: Setting()) {
+                    NavigationLink(destination: SettingView()) {
                         HStack {
                             Image("setting")
                                 .resizable()
