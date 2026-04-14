@@ -141,12 +141,12 @@ struct AccessoryListRow: View {
                 // 右邊放文字
                 VStack(alignment: .leading) {
                     Text(isUnlocked ? accessory.name : "尚未解鎖")
-                        .font(.system(.title2, design: .serif,weight: .bold))
+                        .font(.system(.title3, design: .serif,weight: .bold))
                         .foregroundColor(isUnlocked ? .black : .gray)
                     
                     if isUnlocked {
                         Text(accessory.description)
-                            .font(.system(.body, design: .serif))
+                            .font(.system(.subheadline, design: .serif))
                             .foregroundColor(Color(hex: "#010101"))
                             .multilineTextAlignment(.leading)
                     }
@@ -157,7 +157,8 @@ struct AccessoryListRow: View {
             .background(
                 RoundedRectangle(cornerRadius: 20)
                     .stroke(isSelected ? Color(hex: "#ffcc22") : Color(hex: "#C68F3C"), lineWidth: 3)
-                    .background(Color.white.cornerRadius(14))
+                    .background(isSelected ? Color(hex: "#fffae8").cornerRadius(14) : Color.white.cornerRadius(14))
+//                    .background(Color.white.cornerRadius(14))
             )
         }
         .disabled(!isUnlocked)

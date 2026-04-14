@@ -175,6 +175,7 @@ struct SeaSceneView: View {
                 )
                 Image("trashcan").resizable().frame(width: 120, height: 120)
                     .tag("trashcan")
+                Image("islandDry").tag("island")
             }
             .blur(radius: isBlurred ? 15 : 0)
             .ignoresSafeArea()
