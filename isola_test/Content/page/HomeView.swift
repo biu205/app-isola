@@ -98,18 +98,21 @@ struct HomeView: View {
                 // 上排按鈕們：點擊瓶子/垃圾罐時先隱藏
                 Group {
                     if !isHidingTopButtons {
-                        HStack(spacing: 16) {
+                        HStack(spacing: 8) {
                             NavigationLink(destination: Clothes()) {
                                 Image("clothes").resizable().frame(width: 50, height: 50)
                             }
-                            Button { isShowingSetting = true } label: {
-                                Image("setting").resizable().frame(width: 50, height: 50).accentColor(.black)
-                            }.accentColor(.black)
+                            NavigationLink(destination: SettingView()) {
+                                Image("setting").resizable().frame(width: 50, height: 50)
+                            }
+//                            Button { isShowingSetting = true } label: {
+//                                Image("setting").resizable().frame(width: 45, height: 45).accentColor(.black)
+//                            }.accentColor(.black)
                         }
                         .transition(.opacity)
                     }
                 }
-                .padding(.top, 50)
+                .padding(.top, 30)
                 .padding(.trailing, 20)
             }
             .fullScreenCover(isPresented: $isShowingSetting) {

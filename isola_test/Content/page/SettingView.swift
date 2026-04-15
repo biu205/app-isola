@@ -98,21 +98,7 @@ struct SettingView: View {
                 }
 
             }
-            VStack {
-                HStack {
-                    Spacer()
-                    Button {
-                        dismiss()
-                    } label: {
-                        Image(systemName: "xmark.circle.fill")
-                            .font(.system(size: 28))
-                            .foregroundColor(.black.opacity(0.7))
-                    }
-                    .padding(.top, 12)
-                    .padding(.trailing, 18)
-                }
-                Spacer()
-            }
+
         }
         .onAppear {
             if AppTheme(rawValue: appearanceMode) == nil {
