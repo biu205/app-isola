@@ -62,13 +62,17 @@ let accessoryData = [
     ),
 ]
 
-
 //MARK: - 主頁面
 struct Clothes: View {
-    @State private var userNumber: Int = 5
-    @State private var selectedAccessory: Accessory? = nil
+    @State private var userNumber: Int = 6
+    // 改用 AppStorage 儲存選中的 ID，預設為 -1 表示沒穿戴
+    @AppStorage("selectedAccessoryID") private var selectedAccessoryID: Int = -1
     @Environment(\.dismiss) var dismiss
     
+    // 計算屬性：根據儲存的 ID 找到對應的配件物件
+    private var selectedAccessory: Accessory? {
+        accessoryData.first { $0.id == selectedAccessoryID }
+    }
 
     var body: some View {
         VStack { // <--- 大盒子開始
@@ -76,7 +80,6 @@ struct Clothes: View {
             // 2. 主角顯示區 (ZStack)
             ZStack {
                 Color(hex: "#EEE9D4")
-                  //  .ignoresSafeArea()
                 Image("islandDry")
                     .resizable()
                     .scaledToFit()
@@ -88,15 +91,13 @@ struct Clothes: View {
                         .scaledToFit()
                         .frame(height: 280)
                 }
-
-            }            
+            }
             .padding()
 
             Divider()
 
             // 3. 配件清單區域 (ScrollView)
             ScrollView {
-                
                 VStack(spacing: 18) {
                     ForEach(accessoryData) { item in
                         let isUnlocked = userNumber >= item.unlockThreshold
@@ -104,13 +105,13 @@ struct Clothes: View {
                         AccessoryListRow(
                             accessory: item,
                             isUnlocked: isUnlocked,
-                            isSelected: selectedAccessory?.id == item.id
+                            isSelected: selectedAccessoryID == item.id
                         ) {
                             if isUnlocked {
-                                if selectedAccessory?.id == item.id {
-                                    selectedAccessory = nil
+                                if selectedAccessoryID == item.id {
+                                    selectedAccessoryID = -1 // 取消選取
                                 } else {
-                                    selectedAccessory = item
+                                    selectedAccessoryID = item.id // 儲存 ID
                                 }
                             }
                         }
@@ -123,6 +124,7 @@ struct Clothes: View {
         } // <--- 大盒子結束
     } // <--- body 結束
 } // <--- Clothes 結束
+
 
 // --- 配件格子組件 ---
 struct AccessoryListRow: View {

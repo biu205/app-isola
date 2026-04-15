@@ -12,90 +12,79 @@ struct HomeView: View {
     @State private var isShowingQuestion = false
     @State private var isShowingSetting = false
     @AppStorage("appearanceMode") private var appearanceMode: Int = AppTheme.system.rawValue
+    // 讀取換裝頁儲存的 ID
+    @AppStorage("selectedAccessoryID") private var selectedAccessoryID: Int = -1
 
     private var currentTheme: AppTheme {
         AppTheme(rawValue: appearanceMode) ?? .system
     }
+    
+    // 取得選中的配件資料
+    private var selectedAccessory: Accessory? {
+        accessoryData.first { $0.id == selectedAccessoryID }
+    }
 
     var body: some View {
         NavigationStack {
-
-            // ZStack {
             ZStack(alignment: .topTrailing) {
                 // 1. 最底層的海洋
                 SeaSceneView(isBlurred: isShowingQuestion, theme: currentTheme) {
-                    // 瓶子點擊後的動作
                     triggerHaptic(style: .medium)
-                    withAnimation(.spring(response: 0.4, dampingFraction: 0.7))
-                    {
+                    withAnimation(.spring(response: 0.4, dampingFraction: 0.7)) {
                         isShowingQuestion = true
                     }
                 }
+                
+                // --- 新增：配件顯示圖層 ---
+                // 這裡使用 GeometryReader 是為了獲取跟 Canvas 一樣的螢幕中心點
+                if let accessory = selectedAccessory {
+                    GeometryReader { proxy in
+                        let centerX = proxy.size.width / 2
+                        let centerY = proxy.size.height / 2
+                        
+                        Image(accessory.displayImageName)
+                            .resizable()
+                            .scaledToFit()
+                            .frame(width: 290) // 這邊是改大小跟配件位置
+                            .position(x: centerX, y: centerY)
+                            // 利用 offset 微調配件在島嶼上的位置（例如往上移一點點掛在頭上）
+                            .offset(x: 50, y: -19)
+                            .blur(radius: isShowingQuestion ? 15 : 0)
+                            .allowsHitTesting(false) // 讓配件不會擋住點擊事件
+                    }
+                }
 
-                // 2. 中層：遮罩層 (僅在視窗顯示時出現)
+                // 2. 中層：遮罩層
                 if isShowingQuestion {
                     Color.black.opacity(0.15)
                         .ignoresSafeArea()
                         .onTapGesture {
                             dismissKeyboard()
                         }
-
-                    // 3. 上層：問題視窗 (情緒入口)
+                    // ... (QuestionView 保持不變)
                     QuestionView(isPresented: $isShowingQuestion)
-                        .transition(
-                            .asymmetric(
-                                insertion: .scale(scale: 0.9).combined(
-                                    with: .opacity
-                                ),
-                                removal: .opacity.combined(
-                                    with: .scale(scale: 1.1)
-                                )
-                            )
-                        )
+                        .transition(.asymmetric(insertion: .scale(scale: 0.9).combined(with: .opacity), removal: .opacity.combined(with: .scale(scale: 1.1))))
                         .zIndex(1)
                 }
 
-                // 上排按鈕們
-                
-                // 修改後的結構參考
+                // 上排按鈕們 (保持不變)
                 HStack(spacing: 16) {
-                    // 按鈕 1：衣服
                     NavigationLink(destination: Clothes()) {
-                        HStack {
-                            Image("clothes")
-                                .resizable()
-                                .frame(width: 45, height: 45)
-                                //.renderingMode(.template) // 現在編譯器能認出它是 Image 的屬性了
-                                //.foregroundColor(.blue)
-                        }
+                        Image("clothes").resizable().frame(width: 45, height: 45)
                     }
-
-                    // 按鈕 2：設定
-                    Button {
-                        isShowingSetting = true
-                    } label: {
-                        HStack {
-                            Image("setting")
-                                .resizable()
-                                .frame(width: 45, height: 45)
-                                .accentColor(.black)
-                                //.renderingMode(.template)
-                                //.foregroundColor(.gray) // 舉例改成灰色
-                        }
-                    }
-                    .accentColor(.black)
-                }   .font(.system(size: 18, weight: .medium, design: .serif))
-                    .foregroundColor(.brown)
-                    .padding(.top, 50)
-                    .padding(.trailing, 20)
+                    Button { isShowingSetting = true } label: {
+                        Image("setting").resizable().frame(width: 45, height: 45).accentColor(.black)
+                    }.accentColor(.black)
                 }
-
+                .padding(.top, 50).padding(.trailing, 20)
             }
             .fullScreenCover(isPresented: $isShowingSetting) {
                 SettingView()
             }
         }
     }
+    // ... (其他函數保持不變)
+}
     // 觸覺反饋函數
     private func triggerHaptic(style: UIImpactFeedbackGenerator.FeedbackStyle) {
         let generator = UIImpactFeedbackGenerator(style: style)

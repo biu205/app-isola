@@ -35,9 +35,8 @@ struct QuestionView: View {
                         }) {
                             HStack(spacing: 5) {
                                 Image(systemName: "chevron.left")
-                                Text("心情")
                             }
-                            .font(.system(size: 17, weight: .medium, design: .serif))
+                            .font(.system(size: 20, weight: .bold))
                             .foregroundColor(.brown.opacity(0.8))
                         }
                         .padding(.leading, 30)
@@ -52,12 +51,13 @@ struct QuestionView: View {
                         UIImpactFeedbackGenerator(style: .light).impactOccurred()
                     }) {
                         Image(systemName: "xmark")
-                            .font(.system(size: 24, weight: .bold))
-                            .foregroundColor(.gray.opacity(0.5))
+                            .font(.system(size: 20, weight: .bold))
+                            //.foregroundColor(.gray.opacity(0.5))
+                            .foregroundColor(.brown.opacity(0.8))
                     }
-                    .padding(.trailing, 40)
+                    .padding(.trailing, 27)
                 }
-                .padding(.top, 180) // 調整頂部按鈕位置，使其在紙張內
+                .padding(.top, 150) // 調整頂部按鈕位置，使其在紙張內
                 .padding(.horizontal, 30)
                 
                 // 內容切換區
@@ -151,7 +151,7 @@ struct QuestionView: View {
                         Text("請輸入")
                             .font(.system(size: 18, design: .serif))
                             .foregroundColor(.gray.opacity(0.4)) // 淡淡的灰色
-                            .multilineTextAlignment(.center)
+                            .multilineTextAlignment(.leading)
                             .padding(.horizontal, 80)
                             .padding(.vertical, 18)
                             .allowsHitTesting(false)
@@ -182,7 +182,7 @@ struct QuestionView: View {
                 }
                 .disabled(inputText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
                 .padding(.horizontal, 100)
-                .padding(.bottom, 20)
+                .padding(.bottom, 30)
             }
         }
     // --- 儲存邏輯 ---
