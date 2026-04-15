@@ -3,137 +3,161 @@ import SwiftData
 
 struct Backpack: View {
     @State private var currentMonth: Date = Date()
-    // 新增：控制選擇器彈出的狀態
     @State private var showDatePicker = false
     @Environment(\.modelContext) private var modelContext
-
-    // 新增：用於選擇器內部的暫存狀態
     @State private var selectedYear: Int = 2026
     @State private var selectedMonth: Int = 4
-    // 自動抓取資料，依日期排序
     @Query(sort: \DiaryEntry.date, order: .reverse) private var entries: [DiaryEntry]
-
-    // 編輯狀態
     @State private var entryToEdit: DiaryEntry?
 
-    // 💡 為了維持一致性，這裡定義與 QuestionView 相同的對應表
-    let moodImages = ["非常不愉快度Ｑ", "不愉快度Ｑ", "度Ｑ", "愉快度Ｑ", "非常愉快度Ｑ"]
+    let moodImages = ["非常不愉快度Ｑ1", "不愉快度Ｑ1", "度Ｑ1", "愉快度Ｑ1", "非常愉快度Ｑ1"]
     let moodNames = ["非常不愉快", "不愉快", "一般", "愉快", "非常愉快"]
+    let emptyMoodImage = "空白沒寫度Ｑ"
+    let futureMoodImage = "還沒到度Ｑ"
     private let calendar = Calendar.current
     private let columns = Array(repeating: GridItem(.flexible(), spacing: 10), count: 7)
 
+// MARK: - 主視圖
     var body: some View {
-            // 核心優化：將月曆與列表統一放進同一個 VStack 管理
-            VStack(spacing: 0) {
-                // 1. 頂部導航與月份標題
-                dynamicYearHeader
-                    .padding(.top, 40)
-                    .padding(.bottom, 10)
-                
-                monthHeader
-                    .padding(.top, 0)
-                    .padding(.bottom, 20)
-                
-                // 2. 星期標題列
-                weekdayHeader
-                
-                // 3. 真實的日曆網格
-                calendarGrid
-                    .padding(.horizontal, 20)
-                
-                // 4. 下半部：日記背包列表 (取代了原本的 Spacer 和 NavigationStack)
-                ZStack {
-                    
-                    // 這裡可以統一用你的主題色，或者保留系統群組色
-                    Color(hex: "#FFFCF1")
-                        .ignoresSafeArea(edges: .bottom)
+        ZStack {
+            // 背景色
+            Color(hex: "#FFFCF1")
+                .ignoresSafeArea()
+            // 可滑動的頁面
+            ScrollView {
+                VStack(spacing: 0) {
+                    dynamicYearHeader
+                        .padding(.top, 40)
+                        .padding(.bottom, 10)
 
-                    if entries.isEmpty {
-                        VStack(spacing: 12) {
-                            Image(systemName: "backpack.fill")
-                                .font(.system(size: 60))
-                                .foregroundColor(.gray.opacity(0.4))
-                            Text("背包裡空空的")
-                                .font(.headline)
-                                .foregroundColor(.secondary)
-                            Text("去海灘撿個瓶子寫下今天的心情吧！")
-                                .font(.caption)
-                                .foregroundColor(.secondary)
-                        }
-                    } else {
-                        List {
-                            ForEach(entries) { entry in
-                                Button {
-                                    entryToEdit = entry
-                                } label: {
-                                    HStack(spacing: 16) {
-                                        let moodIndex = max(0, min(4, entry.moodIndex))
-                                        // 記得確保你有把這些圖片放進 Assets 裡
-                                        Image(moodImages[moodIndex])
-                                            .resizable()
-                                            .scaledToFit()
-                                            .frame(width: 48, height: 48)
-                                            .background(Circle().fill(Color.white.opacity(0.6)))
-                                        
-                                        VStack(alignment: .leading, spacing: 6) {
-                                            HStack {
-                                                Text(entry.title)
-                                                    .font(.system(.headline, design: .serif))
-                                                    .foregroundColor(.primary)
-                                                Spacer()
-                                                Text(entry.date, format: .dateTime.month().day())
-                                                    .font(.caption)
-                                                    .foregroundColor(.secondary)
-                                            }
-                                            
-                                            Text("[\(moodNames[moodIndex])] \(entry.content)")
-                                                .font(.subheadline)
-                                                .foregroundColor(.secondary)
-                                                .lineLimit(1)
-                                        }
-                                    }
-                                    .padding(.vertical, 4)
-                                }
-                            }
-                            .onDelete(perform: deleteEntries)
-                        }
-                        .listStyle(.plain) // 💡 競賽加分亮點：移除 List 預設的醜陋灰色背景，讓它完美融入你的 App 視覺
-                      
-                    }
-                }  .padding(.top,40)
-            }
-        
-            .background(Color(hex: "#FFFCF1").ignoresSafeArea())
-            
-            // 所有的彈出視窗 (Sheet) 統一掛在最外層的 VStack 上
-            .sheet(item: $entryToEdit) { entry in
-                EditDiaryView(entry: entry)
-            }
-            .sheet(isPresented: $showDatePicker) {
-                MonthYearPickerView(
-                    selectedYear: $selectedYear,
-                    selectedMonth: $selectedMonth,
-                    onConfirm: {
-                        updateCurrentMonth()
-                    }
-                )
-                .presentationDetents([.height(320)])
-                .presentationDragIndicator(.visible)
+                    monthHeader
+                        .padding(.bottom, 20)
+
+                    weekdayHeader
+
+                    calendarGrid
+                        .padding(.horizontal, 20)
+
+                    diarySection
+                        .padding(.top, 40)
+                        .padding(.horizontal, 20)
+                        .padding(.bottom, 24)
+                }
             }
         }
-    private func deleteEntries(offsets: IndexSet) {
-        withAnimation {
-            for index in offsets {
-                modelContext.delete(entries[index])
-            }
-            UIImpactFeedbackGenerator(style: .medium).impactOccurred()
+        // 編輯日記的彈出式視窗
+        .sheet(item: $entryToEdit) { entry in
+            EditDiaryView(entry: entry)
+        }
+        // 年月選擇器的彈出式視窗
+        .sheet(isPresented: $showDatePicker) {
+            MonthYearPickerView(
+                selectedYear: $selectedYear,
+                selectedMonth: $selectedMonth,
+                onConfirm: {
+                    updateCurrentMonth()
+                }
+            )
+            .presentationDetents([.height(320)])
+            .presentationDragIndicator(.visible)
         }
     }
 
+    // 刪除日記
+    func deleteEntry(_ entry: DiaryEntry) {
+            UIImpactFeedbackGenerator(style: .rigid).impactOccurred()
+            withAnimation(.spring(response: 0.15, dampingFraction: 0.75)) {
+                modelContext.delete(entry)
+            }
+        }
 }
 
 // MARK: - UI 組件拆分
+// 日記列表
 private extension Backpack {
+    var diarySection: some View {
+            Group {
+                // 如果日記列表為空，顯示空白的提示
+                if entries.isEmpty {
+                    VStack(spacing: 12) {
+                        Image(systemName: "backpack.fill")
+                            .font(.system(size: 60))
+                            .foregroundColor(.gray.opacity(0.4))
+                        Text("背包裡空空的")
+                            .font(.headline)
+                            .foregroundColor(.gray)
+                        Text("去海灘撿個瓶子寫下今天的心情吧！")
+                            .font(.caption)
+                            .foregroundColor(.gray)
+                    }
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, 24)
+                } else {
+                    // 如果日記列表不為空，顯示日記列表
+                    LazyVStack(spacing: 12) {
+                        ForEach(entries) { entry in
+                            diaryRow(entry)
+                                .transition(.asymmetric(
+                                    insertion: .move(edge: .bottom).combined(with: .opacity),
+                                    removal: .scale(scale: 0.8, anchor: .center).combined(with: .opacity)
+                                ))
+                        }
+                    }
+                    // 動畫效果
+                    .animation(.spring(response: 0.3, dampingFraction: 0.8, blendDuration: 0), value: entries)
+                }
+            }
+        }
+
+    // 日記行
+    func diaryRow(_ entry: DiaryEntry) -> some View {
+        // 心情索引
+        let moodIndex = max(0, min(4, entry.moodIndex))
+        // 截斷內容
+        let truncatedContent = entry.content.count > 10
+            ? String(entry.content.prefix(10)) + "..."
+            : entry.content
+
+        return DiarySwipeRow(
+            // 點擊日記行
+            onTap: { entryToEdit = entry },
+            // 刪除日記行
+            onDelete: { deleteEntry(entry) }
+        ) {
+            // 心情圖片
+            HStack(spacing: 16) {
+                Image(moodImages[moodIndex])
+                    .resizable()
+                    .scaledToFit()
+                    .frame(width: 48, height: 48)
+                    .background(Circle().fill(Color.white.opacity(0.9)))
+
+                // 日記標題和日期
+                VStack(alignment: .leading, spacing: 6) {
+                    HStack(alignment: .lastTextBaseline) {
+                        Text(entry.title)
+                            .font(.system(.headline, design: .serif))
+                            .foregroundColor(.black)
+                            .lineLimit(1)
+                            .multilineTextAlignment(.leading)
+
+                        Spacer()
+
+                        Text(entry.date, format: .dateTime.month().day())
+                            .font(.caption)
+                            .foregroundColor(.gray)
+                            .layoutPriority(1)
+                    }
+                
+                    Text("[\(moodNames[moodIndex])] \(truncatedContent)")
+                        .font(.subheadline)
+                        .foregroundColor(.gray)
+                        .lineLimit(1)
+                }
+                .frame(maxWidth: .infinity, alignment: .leading)
+            }
+        }
+    }
     
     var dynamicYearHeader: some View {
         HStack {
@@ -213,16 +237,112 @@ private extension Backpack {
             }
             
             ForEach(1...daysInMonth, id: \.self) { day in
+                let date = dateForDay(day, in: currentMonth)
                 VStack(spacing: 8) {
                     Text("\(day)")
                         .font(.system(size: 16, design: .serif))
                         .foregroundStyle(.black)
                     
-                    Capsule()
-                        .fill(Color.gray.opacity(0.15))
-                        .frame(height: 32)
+                    Button {
+                        openLatestEntry(for: date)
+                    } label: {
+                        Image(moodImageName(for: date))
+                            .resizable()
+                            .scaledToFit()
+                            .frame(height: 45)
+                    }
+                    .buttonStyle(.plain)
                 }
             }
+        }
+    }
+}
+
+struct DiarySwipeRow<Content: View>: View {
+    let onTap: () -> Void
+    let onDelete: () -> Void
+    @ViewBuilder var content: Content
+
+    @State private var offsetX: CGFloat = 0
+    @State private var isDraggingRow = false
+    @State private var isDeleting = false
+    private let revealWidth: CGFloat = 76
+
+    var body: some View {
+        ZStack(alignment: .trailing) {
+            RoundedRectangle(cornerRadius: 16)
+                .fill(Color.red.opacity(0.9))
+                .overlay(alignment: .trailing) {
+                    Button(action: handleDeleteTap) {
+                        Image(systemName: "trash.circle.fill")
+                            .font(.system(size: 28, weight: .semibold))
+                            .foregroundColor(.white)
+                    }
+                    .buttonStyle(.plain)
+                    .padding(.trailing, 18)
+                    .opacity(offsetX < -10 ? 1 : 0)
+                    .scaleEffect(offsetX <= -revealWidth + 2 ? 1.06 : 1.0)
+                    .animation(.spring(response: 0.2, dampingFraction: 0.85), value: offsetX)
+                }
+
+            content
+                .padding(12)
+                .background(Color.white)
+                .clipShape(RoundedRectangle(cornerRadius: 16))
+                .overlay(
+                    RoundedRectangle(cornerRadius: 16)
+                        .stroke(Color.black.opacity(0.08), lineWidth: 0.8)
+                )
+                .shadow(color: Color.black.opacity(0.03), radius: 5, x: 0, y: 2)
+                .contentShape(RoundedRectangle(cornerRadius: 16))
+                .opacity(isDeleting ? 0 : 1)
+                .scaleEffect(isDeleting ? 0.94 : 1)
+                .onTapGesture {
+                    if offsetX < 0 {
+                        withAnimation(.spring(response: 0.22, dampingFraction: 0.9)) {
+                            offsetX = 0
+                        }
+                        return
+                    }
+                    if !isDraggingRow {
+                        onTap()
+                    }
+                }
+                .offset(x: offsetX)
+                .gesture(
+                    DragGesture(minimumDistance: 10)
+                        .onChanged { value in
+                            isDraggingRow = true
+                            let translation = value.translation.width
+                            if translation < 0 {
+                                offsetX = max(-revealWidth, translation)
+                            } else if offsetX < 0 {
+                                offsetX = min(0, -revealWidth + translation)
+                            }
+                        }
+                        .onEnded { value in
+                            let projected = value.predictedEndTranslation.width
+                            let shouldOpen = value.translation.width < -revealWidth * 0.35 || projected < -revealWidth * 0.7
+                            withAnimation(.spring(response: 0.22, dampingFraction: 0.9)) {
+                                offsetX = shouldOpen ? -revealWidth : 0
+                            }
+                            DispatchQueue.main.asyncAfter(deadline: .now() + 0.05) {
+                                isDraggingRow = false
+                            }
+                        }
+                )
+                .animation(.easeOut(duration: 0.16), value: isDeleting)
+        }
+        .clipShape(RoundedRectangle(cornerRadius: 16))
+    }
+
+    private func handleDeleteTap() {
+        guard !isDeleting else { return }
+        withAnimation(.easeInOut(duration: 0.16)) {
+            isDeleting = true
+        }
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.18) {
+            onDelete()
         }
     }
 }
@@ -253,6 +373,47 @@ private extension Backpack {
         let weekday = calendar.component(.weekday, from: firstOfMonth)
         return weekday - 1
     }
+
+    func dateForDay(_ day: Int, in month: Date) -> Date {
+        var components = calendar.dateComponents([.year, .month], from: month)
+        components.day = day
+        return calendar.date(from: components) ?? month
+    }
+
+    func moodImageName(for date: Date) -> String {
+        let targetDay = calendar.startOfDay(for: date)
+        let today = calendar.startOfDay(for: Date())
+
+        if targetDay > today {
+            return futureMoodImage
+        }
+
+        let dayEntries = entries.filter { entry in
+            calendar.isDate(entry.date, inSameDayAs: targetDay)
+        }
+
+        guard !dayEntries.isEmpty else {
+            return emptyMoodImage
+        }
+
+        let totalMood = dayEntries.reduce(0) { $0 + $1.moodIndex }
+        let averageMood = Double(totalMood) / Double(dayEntries.count)
+        let roundedMoodIndex = Int(averageMood.rounded())
+        let safeMoodIndex = max(0, min(moodImages.count - 1, roundedMoodIndex))
+        return moodImages[safeMoodIndex]
+    }
+
+    func openLatestEntry(for date: Date) {
+        let targetDay = calendar.startOfDay(for: date)
+        let dayEntries = entries
+            .filter { entry in
+                calendar.isDate(entry.date, inSameDayAs: targetDay)
+            }
+            .sorted { $0.date > $1.date }
+
+        guard let latestEntry = dayEntries.first else { return }
+        entryToEdit = latestEntry
+    }
     
     // 將選好的年月更新回 currentMonth
     func updateCurrentMonth() {
@@ -273,8 +434,8 @@ struct MonthYearPickerView: View {
     
     @Environment(\.dismiss) var dismiss // 用於關閉 Sheet
     
-    // 預設年份範圍 (例如：往前 10 年，往後 10 年)
-    let years = Array(2000...2099)
+    // 預設年份範圍
+    let years = Array(2026...2099)
     let months = Array(1...12)
     
     var body: some View {

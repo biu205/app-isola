@@ -8,11 +8,9 @@
 import SwiftUI
 
 struct SettingView: View {
-    // 使用 AppStorage 確保重啟 App 後資料還在
     @AppStorage("userName") var userName: String = "請填寫～"
-    @AppStorage("appearanceMode") var appearanceMode: Int = 0  // 0: 白天, 1: 夜晚, 2: 系統
-    @Environment(UIManager.self) private var uiManager  //控制島臉列開關
-    // 用於控制 TextField 的焦點
+    @AppStorage("appearanceMode") var appearanceMode: Int = 0  
+    @Environment(\.dismiss) private var dismiss
     @FocusState private var isNameFocused: Bool
 
     var body: some View {
@@ -57,6 +55,8 @@ struct SettingView: View {
                             // --- 用戶名稱欄位 ---
                             HStack {
                                 Text("用戶名稱")
+                                    .foregroundColor(.black)
+
                                 Spacer()
                                 TextField("輸入名稱", text: $userName)
                                     .multilineTextAlignment(.trailing)
@@ -98,40 +98,31 @@ struct SettingView: View {
                 }
 
             }
+            VStack {
+                HStack {
+                    Spacer()
+                    Button {
+                        dismiss()
+                    } label: {
+                        Image(systemName: "xmark.circle.fill")
+                            .font(.system(size: 28))
+                            .foregroundColor(.black.opacity(0.7))
+                    }
+                    .padding(.top, 12)
+                    .padding(.trailing, 18)
+                }
+                Spacer()
+            }
         }
-        //模式
-        .onChange(of: appearanceMode) { oldValue, newValue in
-            updateTheme(newValue)
-        }
-        //navbar開關～～～～
         .onAppear {
-            withAnimation {
-                print("SettingView 進入了，準備關閉 Navbar")
-                uiManager.isTabBarVisible = false  // 進入設定頁時，把 Navbar 藏起來
-            }
-        }
-        .onDisappear {
-            withAnimation {
-                print("SettingViewＮＯＯＯＯ，")
-                uiManager.isTabBarVisible = true  // 離開設定頁時，把 Navbar 變回來
+            if AppTheme(rawValue: appearanceMode) == nil {
+                appearanceMode = AppTheme.system.rawValue
             }
         }
     }
 
 }
 
-// 切換深淺色模式的邏輯
-func updateTheme(_ mode: Int) {
-    let style: UIUserInterfaceStyle
-    switch mode {
-    case 0: style = .light
-    case 1: style = .dark
-    default: style = .unspecified
-    }
-    UIApplication.shared.connectedScenes
-        .compactMap { $0 as? UIWindowScene }
-        .first?.windows.first?.overrideUserInterfaceStyle = style
-}
 
 // 靜態行組件
 struct StaticRow: View {
@@ -149,6 +140,7 @@ struct StaticRow: View {
             }
             .padding()
             .frame(height: 60)
+            .foregroundColor(.black)
         }
     }
 }

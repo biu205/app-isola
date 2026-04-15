@@ -1,14 +1,6 @@
 import SwiftUI
-import Observation
-
-//關掉nav的開關！
-@Observable
-class UIManager {
-    var isTabBarVisible: Bool = true
-}
 
 struct ContentView: View {
-    @State private var uiManager = UIManager()
     var body: some View {
         TabView {
             // 設定第一頁為首頁的呈現
@@ -41,9 +33,6 @@ struct ContentView: View {
            
         }
         .accentColor(Color.brown)
-        .toolbar(uiManager.isTabBarVisible ? .visible : .hidden, for: .tabBar)
-        .environment(uiManager)
-        
     }
 }
 

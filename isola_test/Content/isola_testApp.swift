@@ -10,9 +10,16 @@ import SwiftData
 
 @main
 struct isola_testApp: App {
+    @AppStorage("appearanceMode") private var appearanceMode: Int = AppTheme.system.rawValue
+
+    private var selectedTheme: AppTheme {
+        AppTheme(rawValue: appearanceMode) ?? .system
+    }
+
     var body: some Scene {
         WindowGroup {
             ContentView()
+                .preferredColorScheme(selectedTheme.colorScheme)
         }
         .modelContainer(for: DiaryEntry.self)
     }

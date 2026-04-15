@@ -5,7 +5,7 @@
 //  Created by Biu on 2026/4/9.
 //
 import SwiftUI
-
+// MARK: - 變數宣告
 struct Accessory: Identifiable {
     let id: Int
     let name: String
@@ -13,11 +13,10 @@ struct Accessory: Identifiable {
     let description: String
     let unlockThreshold: Int
 
-    // 這裡我們新增兩個「計算屬性」，讓程式自動去拼湊正確的名字
     var grayImageName: String { imageName + "灰" }  // 例如：花灰
     var displayImageName: String { imageName + "小" }  // 例如：花小
 }
-
+//MARK: - 配件data
 let accessoryData = [
     Accessory(
         id: 1,
@@ -63,6 +62,8 @@ let accessoryData = [
     ),
 ]
 
+
+//MARK: - 主頁面
 struct Clothes: View {
     @State private var userNumber: Int = 5
     @State private var selectedAccessory: Accessory? = nil
@@ -74,18 +75,21 @@ struct Clothes: View {
     
             // 2. 主角顯示區 (ZStack)
             ZStack {
+                Color(hex: "#EEE9D4")
+                  //  .ignoresSafeArea()
                 Image("islandDry")
                     .resizable()
                     .scaledToFit()
                     .frame(height: 280)
-
+                
                 if let accessory = selectedAccessory {
                     Image(accessory.displayImageName)
                         .resizable()
                         .scaledToFit()
                         .frame(height: 280)
                 }
-            }
+
+            }            
             .padding()
 
             Divider()
@@ -116,7 +120,6 @@ struct Clothes: View {
             }.background(Color(hex: "#EEE9D4"))
             .contentMargins(Edge.Set.all, 10)
             .contentMargins(.top, 20, for: .scrollContent)
-            
         } // <--- 大盒子結束
     } // <--- body 結束
 } // <--- Clothes 結束

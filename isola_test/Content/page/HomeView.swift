@@ -10,6 +10,12 @@ import SwiftUI
 // MARK: - ContentView
 struct HomeView: View {
     @State private var isShowingQuestion = false
+    @State private var isShowingSetting = false
+    @AppStorage("appearanceMode") private var appearanceMode: Int = AppTheme.system.rawValue
+
+    private var currentTheme: AppTheme {
+        AppTheme(rawValue: appearanceMode) ?? .system
+    }
 
     var body: some View {
         NavigationStack {
@@ -17,7 +23,7 @@ struct HomeView: View {
             // ZStack {
             ZStack(alignment: .topTrailing) {
                 // 1. 最底層的海洋
-                SeaSceneView(isBlurred: isShowingQuestion) {
+                SeaSceneView(isBlurred: isShowingQuestion, theme: currentTheme) {
                     // 瓶子點擊後的動作
                     triggerHaptic(style: .medium)
                     withAnimation(.spring(response: 0.4, dampingFraction: 0.7))
@@ -65,7 +71,9 @@ struct HomeView: View {
                     }
 
                     // 按鈕 2：設定
-                    NavigationLink(destination: SettingView()) {
+                    Button {
+                        isShowingSetting = true
+                    } label: {
                         HStack {
                             Image("setting")
                                 .resizable()
@@ -83,6 +91,9 @@ struct HomeView: View {
                 }
 
             }
+            .fullScreenCover(isPresented: $isShowingSetting) {
+                SettingView()
+            }
         }
     }
     // 觸覺反饋函數
@@ -96,15 +107,18 @@ struct HomeView: View {
 // MARK: - 海洋動畫
 struct SeaSceneView: View {
     let isBlurred: Bool
+    let theme: AppTheme
     let onBottleTap: () -> Void
 
     var body: some View {
         TimelineView(.periodic(from: .now, by: 1 / 60)) { timeline in
             Canvas { context, size in
                 let time = timeline.date.timeIntervalSinceReferenceDate
+                let nightOpacity = theme.homeNightOverlayOpacity(at: timeline.date)
 
                 // 1. 資源解析 (確保所有 Symbol 都已定義)
-                guard let background = context.resolveSymbol(id: "bg"),
+                guard let dayBackground = context.resolveSymbol(id: "bg-day"),
+                    let nightBackground = context.resolveSymbol(id: "bg-night"),
                     let island = context.resolveSymbol(id: "island"),
                     let bottle = context.resolveSymbol(id: "bottle"),
                     let trashcan = context.resolveSymbol(id: "trashcan")
@@ -114,7 +128,11 @@ struct SeaSceneView: View {
                 let centerX = size.width / 2
 
                 // --- 海 ---
-                context.draw(background, at: CGPoint(x: centerX, y: midY))
+                context.opacity = 1.0 - nightOpacity
+                context.draw(dayBackground, at: CGPoint(x: centerX, y: midY))
+                context.opacity = nightOpacity
+                context.draw(nightBackground, at: CGPoint(x: centerX, y: midY))
+                context.opacity = 1.0
 
                 // --- 波浪 ---
                 drawWaveLayer(
@@ -165,7 +183,8 @@ struct SeaSceneView: View {
                 )
 
             } symbols: {
-                Image("background").tag("bg")
+                Image("background").tag("bg-day")
+                Image("background-night").tag("bg-night")
                 Image("sea").tag("sea")
                 Image("dark").tag("dark")
                 Image("light").tag("light")
