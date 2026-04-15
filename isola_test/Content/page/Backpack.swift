@@ -147,13 +147,13 @@ private extension Backpack {
                             .font(.caption)
                             .foregroundColor(.gray)
                             .layoutPriority(1)
-                    }
-                
-                    Text("[\(moodNames[moodIndex])] \(truncatedContent)")
+                    }.padding(.top,15)
+                    Text(truncatedContent)
                         .font(.subheadline)
                         .foregroundColor(.gray)
                         .lineLimit(1)
-                }
+                }.padding(.bottom,15)
+
                 .frame(maxWidth: .infinity, alignment: .leading)
             }
         }
@@ -310,28 +310,37 @@ struct DiarySwipeRow<Content: View>: View {
                 }
                 .offset(x: offsetX)
                 .gesture(
-                    DragGesture(minimumDistance: 10)
-                        .onChanged { value in
-                            isDraggingRow = true
-                            let translation = value.translation.width
-                            if translation < 0 {
-                                offsetX = max(-revealWidth, translation)
-                            } else if offsetX < 0 {
-                                offsetX = min(0, -revealWidth + translation)
+                    DragGesture(minimumDistance: 30)
+                            .onChanged { value in
+                                // 💡 修改 2：核心關鍵，判斷如果是上下滑動（垂直位移 > 水平位移），就直接 return 不處理
+                                guard abs(value.translation.width) > abs(value.translation.height) else { return }
+                                
+                                isDraggingRow = true
+                                let translation = value.translation.width
+                                
+                                if translation < 0 {
+                                    offsetX = max(-revealWidth, translation)
+                                } else if offsetX < 0 {
+                                    offsetX = min(0, -revealWidth + translation)
+                                }
                             }
-                        }
-                        .onEnded { value in
-                            let projected = value.predictedEndTranslation.width
-                            let shouldOpen = value.translation.width < -revealWidth * 0.35 || projected < -revealWidth * 0.7
-                            withAnimation(.spring(response: 0.22, dampingFraction: 0.9)) {
-                                offsetX = shouldOpen ? -revealWidth : 0
+                            .onEnded { value in
+                                // 💡 修改 3：確保只有在真正執行了橫向拖曳後，才觸發收合或展開邏輯
+                                guard isDraggingRow else { return }
+                                
+                                let projected = value.predictedEndTranslation.width
+                                let shouldOpen = value.translation.width < -revealWidth * 0.35 || projected < -revealWidth * 0.7
+                                
+                                withAnimation(.spring(response: 0.22, dampingFraction: 0.9)) {
+                                    offsetX = shouldOpen ? -revealWidth : 0
+                                }
+                                
+                                DispatchQueue.main.asyncAfter(deadline: .now() + 0.05) {
+                                    isDraggingRow = false
+                                }
                             }
-                            DispatchQueue.main.asyncAfter(deadline: .now() + 0.05) {
-                                isDraggingRow = false
-                            }
-                        }
-                )
-                .animation(.easeOut(duration: 0.16), value: isDeleting)
+                    )
+                    .animation(.easeOut(duration: 0.16), value: isDeleting)
         }
         .clipShape(RoundedRectangle(cornerRadius: 16))
     }
