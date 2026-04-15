@@ -79,6 +79,7 @@ struct HomeView: View {
                             .blur(radius: isShowingQuestion ? 15 : 0)
                             .allowsHitTesting(false) // 讓配件不會擋住點擊事件
                     }
+                    .ignoresSafeArea(.keyboard)
                 }
 
                 // 2. 中層：遮罩層
