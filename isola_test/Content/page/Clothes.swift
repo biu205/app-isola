@@ -64,7 +64,7 @@ let accessoryData = [
 
 //MARK: - 主頁面
 struct Clothes: View {
-    @State private var userNumber: Int = 6
+    @State private var userNumber: Int = 5
     // 改用 AppStorage 儲存選中的 ID，預設為 -1 表示沒穿戴
     @AppStorage("selectedAccessoryID") private var selectedAccessoryID: Int = -1
     @Environment(\.dismiss) var dismiss
@@ -79,7 +79,7 @@ struct Clothes: View {
     
             // 2. 主角顯示區 (ZStack)
             ZStack {
-                Color(hex: "#EEE9D4")
+                //Color(hex: "#EEE9D4")
                 Image("islandDry")
                     .resizable()
                     .scaledToFit()
@@ -98,7 +98,7 @@ struct Clothes: View {
 
             // 3. 配件清單區域 (ScrollView)
             ScrollView {
-                VStack(spacing: 18) {
+                VStack(spacing: 20) {
                     ForEach(accessoryData) { item in
                         let isUnlocked = userNumber >= item.unlockThreshold
 
@@ -118,10 +118,10 @@ struct Clothes: View {
                     }
                 }
                 .padding(.horizontal)
-            }.background(Color(hex: "#EEE9D4"))
+            }//.background(Color(hex: "#E1d9b7"))
             .contentMargins(Edge.Set.all, 10)
-            .contentMargins(.top, 20, for: .scrollContent)
-        } // <--- 大盒子結束
+            .contentMargins(.top, 10, for: .scrollContent)
+        }.background(Color(hex: "#fffcfe")) // <--- 大盒子結束
     } // <--- body 結束
 } // <--- Clothes 結束
 
@@ -135,7 +135,7 @@ struct AccessoryListRow: View {
 
     var body: some View {
         Button(action: action) {
-            HStack(spacing: 15) { // 改用左右排隊
+            HStack(spacing: 19) { // 改用左右排隊
                 // 左邊放圖
                 Image(isUnlocked ? accessory.imageName : accessory.grayImageName)
                     .resizable()
@@ -163,6 +163,7 @@ struct AccessoryListRow: View {
                 RoundedRectangle(cornerRadius: 20)
                     .stroke(isSelected ? Color(hex: "#ffcc22") : Color(hex: "#C68F3C"), lineWidth: 3)
                     .background(isSelected ? Color(hex: "#fffae8").cornerRadius(14) : Color.white.cornerRadius(14))
+                    
 //                    .background(Color.white.cornerRadius(14))
             )
         }

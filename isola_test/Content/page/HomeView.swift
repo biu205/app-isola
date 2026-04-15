@@ -100,10 +100,10 @@ struct HomeView: View {
                     if !isHidingTopButtons {
                         HStack(spacing: 16) {
                             NavigationLink(destination: Clothes()) {
-                                Image("clothes").resizable().frame(width: 45, height: 45)
+                                Image("clothes").resizable().frame(width: 50, height: 50)
                             }
                             Button { isShowingSetting = true } label: {
-                                Image("setting").resizable().frame(width: 45, height: 45).accentColor(.black)
+                                Image("setting").resizable().frame(width: 50, height: 50).accentColor(.black)
                             }.accentColor(.black)
                         }
                         .transition(.opacity)
