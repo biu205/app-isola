@@ -11,6 +11,7 @@ import SwiftUI
 struct HomeView: View {
     @State private var isShowingQuestion = false
     @State private var isShowingSetting = false
+    @State private var isHidingTopButtons = false
     @AppStorage("appearanceMode") private var appearanceMode: Int = AppTheme.system.rawValue
     // 讀取換裝頁儲存的 ID
     @AppStorage("selectedAccessoryID") private var selectedAccessoryID: Int = -1
@@ -28,12 +29,30 @@ struct HomeView: View {
         NavigationStack {
             ZStack(alignment: .topTrailing) {
                 // 1. 最底層的海洋
-                SeaSceneView(isBlurred: isShowingQuestion, theme: currentTheme) {
-                    triggerHaptic(style: .medium)
-                    withAnimation(.spring(response: 0.4, dampingFraction: 0.7)) {
-                        isShowingQuestion = true
+                SeaSceneView(
+                    isBlurred: isShowingQuestion,
+                    theme: currentTheme,
+                    onBottleTap: {
+                        triggerHaptic(style: .medium)
+                        withAnimation(.easeInOut(duration: 0.2)) {
+                            isHidingTopButtons = true
+                        }
+                        withAnimation(.spring(response: 0.4, dampingFraction: 0.7)) {
+                            isShowingQuestion = true
+                        }
+                    },
+                    onTrashTap: {
+                        triggerHaptic(style: .light)
+                        withAnimation(.easeInOut(duration: 0.2)) {
+                            isHidingTopButtons = true
+                        }
+                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.6) {
+                            withAnimation(.easeInOut(duration: 0.2)) {
+                                isHidingTopButtons = false
+                            }
+                        }
                     }
-                }
+                )
                 
                 // --- 新增：配件顯示圖層 ---
                 // 這裡使用 GeometryReader 是為了獲取跟 Canvas 一樣的螢幕中心點
@@ -77,23 +96,35 @@ struct HomeView: View {
                         .zIndex(1)
                 }
 
-                // 上排按鈕們 (保持不變)
-                HStack(spacing: 16) {
-                    NavigationLink(destination: Clothes()) {
-                        Image("clothes").resizable().frame(width: 45, height: 45)
+                // 上排按鈕們：點擊瓶子/垃圾罐時先隱藏
+                Group {
+                    if !isHidingTopButtons {
+                        HStack(spacing: 16) {
+                            NavigationLink(destination: Clothes()) {
+                                Image("clothes").resizable().frame(width: 45, height: 45)
+                            }
+                            Button { isShowingSetting = true } label: {
+                                Image("setting").resizable().frame(width: 45, height: 45).accentColor(.black)
+                            }.accentColor(.black)
+                        }
+                        .transition(.opacity)
                     }
-                    Button { isShowingSetting = true } label: {
-                        Image("setting").resizable().frame(width: 45, height: 45).accentColor(.black)
-                    }.accentColor(.black)
                 }
-                .padding(.top, 50).padding(.trailing, 20)
+                .padding(.top, 50)
+                .padding(.trailing, 20)
             }
             .fullScreenCover(isPresented: $isShowingSetting) {
                 SettingView()
             }
+            .onChange(of: isShowingQuestion) { _, newValue in
+                if !newValue {
+                    withAnimation(.easeInOut(duration: 0.2)) {
+                        isHidingTopButtons = false
+                    }
+                }
+            }
         }
     }
-    // ... (其他函數保持不變)
 }
     // 觸覺反饋函數
     private func triggerHaptic(style: UIImpactFeedbackGenerator.FeedbackStyle) {
@@ -108,6 +139,7 @@ struct SeaSceneView: View {
     let isBlurred: Bool
     let theme: AppTheme
     let onBottleTap: () -> Void
+    let onTrashTap: () -> Void
 
     var body: some View {
         TimelineView(.periodic(from: .now, by: 1 / 60)) { timeline in
@@ -208,7 +240,7 @@ struct SeaSceneView: View {
                         .position(x: cx + 80, y: cy + 205)
 
                     // 垃圾桶按鈕
-                    Button(action: onBottleTap) { Color.black.opacity(0.001) }
+                    Button(action: onTrashTap) { Color.black.opacity(0.001) }
                         .frame(width: 100, height: 70)
                         .position(x: cx - 100, y: cy + 120)
 
