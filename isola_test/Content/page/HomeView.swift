@@ -46,10 +46,8 @@ struct HomeView: View {
                         withAnimation(.easeInOut(duration: 0.2)) {
                             isHidingTopButtons = true
                         }
-                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.6) {
-                            withAnimation(.easeInOut(duration: 0.2)) {
-                                isHidingTopButtons = false
-                            }
+                        withAnimation(.spring(response: 0.4, dampingFraction: 0.7)) {
+                            isShowingQuestion = true
                         }
                     }
                 )
@@ -150,7 +148,7 @@ struct SeaSceneView: View {
                 // 1. 資源解析 (確保所有 Symbol 都已定義)
                 guard let dayBackground = context.resolveSymbol(id: "bg-day"),
                     let nightBackground = context.resolveSymbol(id: "bg-night"),
-                    let island = context.resolveSymbol(id: "island"),
+                    let _island = context.resolveSymbol(id: "island"),
                     let bottle = context.resolveSymbol(id: "bottle"),
                     let trashcan = context.resolveSymbol(id: "trashcan")
                 else { return }
@@ -195,9 +193,6 @@ struct SeaSceneView: View {
                 )
 
                 // --- 小島、瓶子、垃圾罐 ---
-
-                // 小島
-               // context.draw(island, at: CGPoint(x: centerX, y: midY))
 
                 // 瓶子
                 let bottleY = midY + 150 + sin(time * 1.3) * 10

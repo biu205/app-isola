@@ -152,7 +152,7 @@ struct QuestionView: View {
                             .font(.system(size: 18, design: .serif))
                             .foregroundColor(.gray.opacity(0.4)) // 淡淡的灰色
                             .multilineTextAlignment(.leading)
-                            .padding(.horizontal, 80)
+                            .padding(.horizontal, 15)
                             .padding(.vertical, 18)
                             .allowsHitTesting(false)
                     }
