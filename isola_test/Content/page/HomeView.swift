@@ -42,10 +42,20 @@ struct HomeView: View {
                         let centerX = proxy.size.width / 2
                         let centerY = proxy.size.height / 2
                         
+                        Image("island方")
+                            .resizable()
+                            .scaledToFit()
+                            .frame(width: 295) // 這邊是改大小跟配件位置
+                            .position(x: centerX, y: centerY)
+                            // 利用 offset 微調配件在島嶼上的位置（例如往上移一點點掛在頭上）
+                            .offset(x: 50, y: -19)
+                            .blur(radius: isShowingQuestion ? 15 : 0)
+                            .allowsHitTesting(false) // 讓配件不會擋住點擊事件
+                        
                         Image(accessory.displayImageName)
                             .resizable()
                             .scaledToFit()
-                            .frame(width: 290) // 這邊是改大小跟配件位置
+                            .frame(width: 295) // 這邊是改大小跟配件位置
                             .position(x: centerX, y: centerY)
                             // 利用 offset 微調配件在島嶼上的位置（例如往上移一點點掛在頭上）
                             .offset(x: 50, y: -19)
@@ -155,7 +165,7 @@ struct SeaSceneView: View {
                 // --- 小島、瓶子、垃圾罐 ---
 
                 // 小島
-                context.draw(island, at: CGPoint(x: centerX, y: midY))
+               // context.draw(island, at: CGPoint(x: centerX, y: midY))
 
                 // 瓶子
                 let bottleY = midY + 150 + sin(time * 1.3) * 10
@@ -198,11 +208,10 @@ struct SeaSceneView: View {
                         .position(x: cx + 80, y: cy + 205)
 
                     // 垃圾桶按鈕
-                    Button(action: { print("垃圾桶被點擊") }) {
-                        Color.black.opacity(0.001)
-                    }
-                    .frame(width: 100, height: 70)
-                    .position(x: cx - 100, y: cy + 120)
+                    Button(action: onBottleTap) { Color.black.opacity(0.001) }
+                        .frame(width: 100, height: 70)
+                        .position(x: cx - 100, y: cy + 120)
+
                 }
             }
         }
