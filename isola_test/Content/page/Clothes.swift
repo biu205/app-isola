@@ -79,7 +79,7 @@ struct Clothes: View {
     
             // 2. 主角顯示區 (ZStack)
             ZStack {
-                //Color(hex: "#EEE9D4")
+//                Color(hex: "#EEE9D4")
                 Image("islandDry")
                     .resizable()
                     .scaledToFit()
@@ -118,10 +118,10 @@ struct Clothes: View {
                     }
                 }
                 .padding(.horizontal)
-            }//.background(Color(hex: "#E1d9b7"))
+            }.background(Color(hex: "#FDFBF0"))
             .contentMargins(Edge.Set.all, 10)
             .contentMargins(.top, 10, for: .scrollContent)
-        }.background(Color(hex: "#fffcfe")) // <--- 大盒子結束
+        }.background(Color(hex: "#FDFBF0")) // <--- 大盒子結束
     } // <--- body 結束
 } // <--- Clothes 結束
 

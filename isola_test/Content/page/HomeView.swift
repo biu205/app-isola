@@ -54,30 +54,36 @@ struct HomeView: View {
                 
                 // --- 新增：配件顯示圖層 ---
                 // 這裡使用 GeometryReader 是為了獲取跟 Canvas 一樣的螢幕中心點
+                // 1. 讓島嶼的圖片（度Ｑ）永遠顯示
+                GeometryReader { proxy in
+                    let centerX = proxy.size.width / 2
+                    let centerY = proxy.size.height / 2
+                    
+                    Image("island方")
+                        .resizable()
+                        .scaledToFit()
+                        .frame(width: 295)
+                        .position(x: centerX, y: centerY)
+                        .offset(x: 50, y: -19)
+                        .blur(radius: isShowingQuestion ? 15 : 0)
+                        .allowsHitTesting(false)
+                }
+                .ignoresSafeArea(.keyboard)
+
+                // 2. 只在有選擇配件時，才顯示配件圖層
                 if let accessory = selectedAccessory {
                     GeometryReader { proxy in
                         let centerX = proxy.size.width / 2
                         let centerY = proxy.size.height / 2
                         
-                        Image("island方")
-                            .resizable()
-                            .scaledToFit()
-                            .frame(width: 295) // 這邊是改大小跟配件位置
-                            .position(x: centerX, y: centerY)
-                            // 利用 offset 微調配件在島嶼上的位置（例如往上移一點點掛在頭上）
-                            .offset(x: 50, y: -19)
-                            .blur(radius: isShowingQuestion ? 15 : 0)
-                            .allowsHitTesting(false) // 讓配件不會擋住點擊事件
-                        
                         Image(accessory.displayImageName)
                             .resizable()
                             .scaledToFit()
-                            .frame(width: 295) // 這邊是改大小跟配件位置
+                            .frame(width: 295)
                             .position(x: centerX, y: centerY)
-                            // 利用 offset 微調配件在島嶼上的位置（例如往上移一點點掛在頭上）
                             .offset(x: 50, y: -19)
                             .blur(radius: isShowingQuestion ? 15 : 0)
-                            .allowsHitTesting(false) // 讓配件不會擋住點擊事件
+                            .allowsHitTesting(false)
                     }
                     .ignoresSafeArea(.keyboard)
                 }
@@ -152,7 +158,7 @@ struct SeaSceneView: View {
                 // 1. 資源解析 (確保所有 Symbol 都已定義)
                 guard let dayBackground = context.resolveSymbol(id: "bg-day"),
                     let nightBackground = context.resolveSymbol(id: "bg-night"),
-                    let _island = context.resolveSymbol(id: "island"),
+                    let island = context.resolveSymbol(id: "island"),
                     let bottle = context.resolveSymbol(id: "bottle"),
                     let trashcan = context.resolveSymbol(id: "trashcan")
                 else { return }
