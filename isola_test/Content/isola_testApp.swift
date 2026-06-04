@@ -8,7 +8,7 @@
 import SwiftUI
 import SwiftData
 
-@main
+
 struct isola_testApp: App {
     @AppStorage("appearanceMode") private var appearanceMode: Int = AppTheme.system.rawValue
 
