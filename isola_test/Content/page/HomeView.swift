@@ -7,6 +7,7 @@
 
 import SwiftUI
 
+
 // MARK: - ContentView
 struct HomeView: View {
     @State private var isShowingQuestion = false
@@ -15,6 +16,12 @@ struct HomeView: View {
     @AppStorage("appearanceMode") private var appearanceMode: Int = AppTheme.system.rawValue
     // 讀取換裝頁儲存的 ID
     @AppStorage("selectedAccessoryID") private var selectedAccessoryID: Int = -1
+    
+    // 讀入問題庫
+    @State private var questionManager = DailyQuestionManager()
+    // 請加在 HomeView 內部的最上方
+    @Environment(\.modelContext) private var modelContext
+    @State private var selectedQuestion: JournalQuestion?
 
     private var currentTheme: AppTheme {
         AppTheme(rawValue: appearanceMode) ?? .system
@@ -28,20 +35,45 @@ struct HomeView: View {
     var body: some View {
         NavigationStack {
             ZStack(alignment: .topTrailing) {
-                // 1. 最底層的海洋
+                // 1. 最底層的海洋 (按鈕已外移至主畫面 ZStack 計算，徹底解除 Canvas 負擔)
                 SeaSceneView(
                     isBlurred: isShowingQuestion,
-                    theme: currentTheme,
-                    onBottleTap: {
+                    theme: currentTheme
+                )
+                
+                // 🌟 【隱形觸控層】直接放在主 ZStack，100% 繞過 Canvas 編譯地獄，永遠不超時
+                GeometryReader { proxy in
+                    let cx = proxy.size.width / 2
+                    let cy = proxy.size.height / 2
+
+                    // 瓶子按鈕(日常問答)
+                    
+                    Button(action: {
                         triggerHaptic(style: .medium)
-                        withAnimation(.easeInOut(duration: 0.2)) {
-                            isHidingTopButtons = true
+                        print("🟡 瓶子被點擊")
+                        print("🟡 todayDailyQuestion = \(String(describing: questionManager.todayDailyQuestion))")
+                        if let question = questionManager.todayDailyQuestion {
+                            print("🟢 有題目，準備顯示")
+                            self.selectedQuestion = question
+                            withAnimation(.spring(response: 0.4, dampingFraction: 0.7)) {
+                                self.isShowingQuestion = true
+                            }
+                            withAnimation(.easeInOut(duration: 0.2)) {
+                                self.isHidingTopButtons = true
+                            }
                         }
-                        withAnimation(.spring(response: 0.4, dampingFraction: 0.7)) {
-                            isShowingQuestion = true
+                        else{
+                            print("🔴 沒有題目")
                         }
-                    },
-                    onTrashTap: {
+                    }) {
+                        Color.black.opacity(0.001)
+                    }
+                    .frame(width: 80, height: 95)
+                    .position(x: cx + 80, y: cy + 205)
+                    // .disabled(questionManager.todayDailyQuestion == nil)
+
+                    // 垃圾桶按鈕
+                    Button(action: {
                         triggerHaptic(style: .light)
                         withAnimation(.easeInOut(duration: 0.2)) {
                             isHidingTopButtons = true
@@ -49,8 +81,13 @@ struct HomeView: View {
                         withAnimation(.spring(response: 0.4, dampingFraction: 0.7)) {
                             isShowingQuestion = true
                         }
+                    }) {
+                        Color.black.opacity(0.001)
                     }
-                )
+                    .frame(width: 100, height: 70)
+                    .position(x: cx - 100, y: cy + 120)
+                }
+                .ignoresSafeArea()
                 
                 // --- 新增：配件顯示圖層 ---
                 // 這裡使用 GeometryReader 是為了獲取跟 Canvas 一樣的螢幕中心點
@@ -96,9 +133,14 @@ struct HomeView: View {
                             dismissKeyboard()
                         }
                     // ... (QuestionView 保持不變)
-                    QuestionView(isPresented: $isShowingQuestion)
-                        .transition(.asymmetric(insertion: .scale(scale: 0.9).combined(with: .opacity), removal: .opacity.combined(with: .scale(scale: 1.1))))
-                        .zIndex(1)
+                    if let question = selectedQuestion {
+                        QuestionView(isPresented: $isShowingQuestion, question: question) // 將今天隨機抽到的題目物件當作參數傳入
+                            .transition(.asymmetric(
+                                insertion: .scale(scale: 0.9).combined(with: .opacity),
+                                removal: .scale(scale: 1.1).combined(with: .opacity)
+                            ))
+                            .zIndex(1)
+                    }
                 }
 
                 // 上排按鈕們：點擊瓶子/垃圾罐時先隱藏
@@ -111,16 +153,21 @@ struct HomeView: View {
                             NavigationLink(destination: SettingView()) {
                                 Image("setting").resizable().frame(width: 50, height: 50)
                             }
-//                            Button { isShowingSetting = true } label: {
-//                                Image("setting").resizable().frame(width: 45, height: 45).accentColor(.black)
-//                            }.accentColor(.black)
                         }
                         .transition(.opacity)
                     }
                 }
                 .padding(.top, 30)
                 .padding(.trailing, 20)
+                
+                
             }
+            .task {
+                    // 自動傳入環境中的 modelContext 執行 Firebase 檢查與選題 凌晨切換時間12點
+                    await questionManager.initializeDailyQuestions(modelContext: modelContext)
+                print("🔵 初始化完成，todayDailyQuestion = \(String(describing: questionManager.todayDailyQuestion))")
+                }
+                }
             .fullScreenCover(isPresented: $isShowingSetting) {
                 SettingView()
             }
@@ -133,11 +180,12 @@ struct HomeView: View {
             }
         }
     }
-}
+
+
     // 觸覺反饋函數
     private func triggerHaptic(style: UIImpactFeedbackGenerator.FeedbackStyle) {
         let generator = UIImpactFeedbackGenerator(style: style)
-        generator.impactOccurred()
+        let _ = generator.impactOccurred()
     }
 
 
@@ -146,8 +194,6 @@ struct HomeView: View {
 struct SeaSceneView: View {
     let isBlurred: Bool
     let theme: AppTheme
-    let onBottleTap: () -> Void
-    let onTrashTap: () -> Void
 
     var body: some View {
         TimelineView(.periodic(from: .now, by: 1 / 60)) { timeline in
@@ -174,33 +220,9 @@ struct SeaSceneView: View {
                 context.opacity = 1.0
 
                 // --- 波浪 ---
-                drawWaveLayer(
-                    context: context,
-                    size: size,
-                    time: time,
-                    id: "sea",
-                    speed: 70,
-                    amp: 2,
-                    freq: 1.5
-                )
-                drawWaveLayer(
-                    context: context,
-                    size: size,
-                    time: time,
-                    id: "dark",
-                    speed: 60,
-                    amp: 8,
-                    freq: 1.2
-                )
-                drawWaveLayer(
-                    context: context,
-                    size: size,
-                    time: time,
-                    id: "light",
-                    speed: 40,
-                    amp: 3,
-                    freq: 0.8
-                )
+                drawWaveLayer(context: context, size: size, time: time, id: "sea", speed: 70, amp: 2, freq: 1.5)
+                drawWaveLayer(context: context, size: size, time: time, id: "dark", speed: 60, amp: 8, freq: 1.2)
+                drawWaveLayer(context: context, size: size, time: time, id: "light", speed: 40, amp: 3, freq: 0.8)
 
                 // --- 小島、瓶子、垃圾罐 ---
 
@@ -234,23 +256,6 @@ struct SeaSceneView: View {
             }
             .blur(radius: isBlurred ? 15 : 0)
             .ignoresSafeArea()
-            .overlay {
-                GeometryReader { proxy in
-                    let cx = proxy.size.width / 2
-                    let cy = proxy.size.height / 2
-
-                    // 瓶子按鈕
-                    Button(action: onBottleTap) { Color.black.opacity(0.001) }
-                        .frame(width: 80, height: 95)
-                        .position(x: cx + 80, y: cy + 205)
-
-                    // 垃圾桶按鈕
-                    Button(action: onTrashTap) { Color.black.opacity(0.001) }
-                        .frame(width: 100, height: 70)
-                        .position(x: cx - 100, y: cy + 120)
-
-                }
-            }
         }
     }
 

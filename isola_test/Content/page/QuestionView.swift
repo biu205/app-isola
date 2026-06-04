@@ -11,6 +11,8 @@ struct QuestionView: View {
     @State private var currentState: Int = 0
     @State private var selectedMoodIndex: Int = 2
     
+    let question: JournalQuestion
+    
     let moodImages = ["非常不愉快度Ｑ", "不愉快度Ｑ", "度Ｑ", "愉快度Ｑ", "非常愉快度Ｑ"]
     let moodName = ["非常不愉快", "不愉快", "一般", "愉快", "非常愉快"]
     
@@ -81,7 +83,7 @@ struct QuestionView: View {
     // --- 子視圖：心情選擇 ---
     private var moodSelectionSection: some View {
         VStack(spacing: 30) {
-            Text("今天的心情如何？")
+            Text(question.text)
                 .font(.system(.title3, design: .serif))
                 .fontWeight(.medium)
                 .foregroundColor(.black.opacity(0.7))
@@ -138,7 +140,8 @@ struct QuestionView: View {
             VStack(spacing: 15) {
                 // 這裡變成了：從 JSON 抓取的動態題目
                 // 如果 JSON 還沒讀到，會顯示 "載入題目中..."
-                Text(qManager.allQuestions.first?.content ?? "載入題目中...")
+                
+                Text(question.text)
                     .font(.system(.headline, design: .serif))
                     .multilineTextAlignment(.center)
                     .foregroundColor(.black.opacity(0.7))

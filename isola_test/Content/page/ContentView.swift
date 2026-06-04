@@ -1,4 +1,28 @@
 import SwiftUI
+import FirebaseCore
+// firebase!耶
+
+class AppDelegate: NSObject, UIApplicationDelegate {
+  func application(_ application: UIApplication,
+                   didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey : Any]? = nil) -> Bool {
+    FirebaseApp.configure()
+    return true
+  }
+}
+
+@main
+struct YourApp: App {
+  // register app delegate for Firebase setup
+  @UIApplicationDelegateAdaptor(AppDelegate.self) var delegate
+
+  var body: some Scene {
+    WindowGroup {
+      NavigationView {
+        ContentView()
+      }
+    }
+  }
+}
 
 struct ContentView: View {
     var body: some View {
@@ -18,7 +42,7 @@ struct ContentView: View {
                 }
             
             // 第三個標籤
-            First_aid_Kit()
+            MoodReportView()
                 .tabItem {
                     Image("First_Aid_Kit")
                     Text("急救箱")
