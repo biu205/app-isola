@@ -19,9 +19,10 @@ enum AppTheme: Int {
         case .light:
             return .light
         case .dark:
-            return .light
+            return .dark
         case .system:
-            return .light // nil 代表跟隨 iOS 系統目前的設定
+            let hour = Calendar.current.component(.hour, from: Date())
+            return hour >= 19 ? .dark : .light
         }
     }
 }

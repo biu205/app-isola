@@ -15,9 +15,24 @@
 		5064AFF42F7A53B900EE48F4 /* isola_test.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = isola_test.app; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
+/* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
+		97DD8A482FD1D84C004F762A /* Exceptions for "isola_test" folder in "isola_test" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				".claude/skills/routing-navigation/SKILL.md",
+				".claude/skills/swift-style-guide/SKILL.md",
+				".claude/skills/swiftui-patterns/SKILL.md",
+			);
+			target = 5064AFF32F7A53B900EE48F4 /* isola_test */;
+		};
+/* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
+
 /* Begin PBXFileSystemSynchronizedRootGroup section */
 		5064AFF62F7A53B900EE48F4 /* isola_test */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+				97DD8A482FD1D84C004F762A /* Exceptions for "isola_test" folder in "isola_test" target */,
+			);
 			path = isola_test;
 			sourceTree = "<group>";
 		};
@@ -273,12 +288,13 @@
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEAD_CODE_STRIPPING = YES;
-				DEVELOPMENT_TEAM = 9JYR5Q7CA5;
+				DEVELOPMENT_TEAM = SV3MU85Q9J;
 				ENABLE_APP_SANDBOX = YES;
 				ENABLE_HARDENED_RUNTIME = YES;
 				ENABLE_PREVIEWS = YES;
 				ENABLE_USER_SELECTED_FILES = readonly;
 				GENERATE_INFOPLIST_FILE = YES;
+				"INFOPLIST_KEY_NSFaceIDUsageDescription" = "isola 使用 Face ID 來解鎖 App";
 				"INFOPLIST_KEY_UIApplicationSceneManifest_Generation[sdk=iphoneos*]" = YES;
 				"INFOPLIST_KEY_UIApplicationSceneManifest_Generation[sdk=iphonesimulator*]" = YES;
 				"INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents[sdk=iphoneos*]" = YES;
@@ -294,7 +310,7 @@
 				"LD_RUNPATH_SEARCH_PATHS[sdk=macosx*]" = "@executable_path/../Frameworks";
 				MACOSX_DEPLOYMENT_TARGET = 26.2;
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = "n.isola-test1";
+				PRODUCT_BUNDLE_IDENTIFIER = "n.isola-test";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				REGISTER_APP_GROUPS = YES;
 				SDKROOT = auto;
@@ -319,12 +335,13 @@
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEAD_CODE_STRIPPING = YES;
-				DEVELOPMENT_TEAM = 9JYR5Q7CA5;
+				DEVELOPMENT_TEAM = SV3MU85Q9J;
 				ENABLE_APP_SANDBOX = YES;
 				ENABLE_HARDENED_RUNTIME = YES;
 				ENABLE_PREVIEWS = YES;
 				ENABLE_USER_SELECTED_FILES = readonly;
 				GENERATE_INFOPLIST_FILE = YES;
+				"INFOPLIST_KEY_NSFaceIDUsageDescription" = "isola 使用 Face ID 來解鎖 App";
 				"INFOPLIST_KEY_UIApplicationSceneManifest_Generation[sdk=iphoneos*]" = YES;
 				"INFOPLIST_KEY_UIApplicationSceneManifest_Generation[sdk=iphonesimulator*]" = YES;
 				"INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents[sdk=iphoneos*]" = YES;
@@ -340,7 +357,7 @@
 				"LD_RUNPATH_SEARCH_PATHS[sdk=macosx*]" = "@executable_path/../Frameworks";
 				MACOSX_DEPLOYMENT_TARGET = 26.2;
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = "n.isola-test1";
+				PRODUCT_BUNDLE_IDENTIFIER = "n.isola-test";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				REGISTER_APP_GROUPS = YES;
 				SDKROOT = auto;

@@ -21,7 +21,7 @@ struct isola_testApp: App {
             ContentView()
                 .preferredColorScheme(selectedTheme.colorScheme)
         }
-        .modelContainer(for: DiaryEntry.self)
+        .modelContainer(for: [DiaryEntry.self, JournalQuestion.self])
     }
 }
 

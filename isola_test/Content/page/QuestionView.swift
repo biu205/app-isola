@@ -2,7 +2,6 @@ import SwiftUI
 import SwiftData
 
 struct QuestionView: View {
-    @StateObject var qManager = QuestionManager()
     @Environment(\.modelContext) private var modelContext
     @Binding var isPresented: Bool
     @State private var inputText = ""
@@ -191,7 +190,7 @@ struct QuestionView: View {
     // --- 儲存邏輯 ---
     private func saveAndClose() {
         let newEntry = DiaryEntry(
-            title: qManager.allQuestions.first?.content ?? "一般日記",
+            title: question.text,
             content: inputText,
             moodIndex: selectedMoodIndex
         )

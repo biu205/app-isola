@@ -1,4 +1,5 @@
 import SwiftUI
+import SwiftData
 import FirebaseCore
 // firebase!耶
 
@@ -17,46 +18,49 @@ struct YourApp: App {
 
   var body: some Scene {
     WindowGroup {
-      NavigationView {
+      NavigationStack {
         ContentView()
       }
     }
+    .modelContainer(for: [DiaryEntry.self, JournalQuestion.self])
   }
 }
 
 struct ContentView: View {
+    @State private var lockManager = AppLockManager.shared
+
     var body: some View {
-        TabView {
-            // 設定第一頁為首頁的呈現
-            
-            HomeView()
-                .tabItem {
-                    Image("Home")
-                    Text("首頁")
-                }
-            // 第二個標籤
-            Backpack()
-                .tabItem {
-                    Image("Backpack")
-                    Text("背包")
-                }
-            
-            // 第三個標籤
-            MoodReportView()
-                .tabItem {
-                    Image("First_Aid_Kit")
-                    Text("急救箱")
-                }
-            
-            // 第四個標籤 (HRV)
-            HRV()
-                .tabItem {
-                    Image("Month_Report")
-                    Text("月報")
-                }
-           
+        ZStack {
+            TabView {
+                HomeView()
+                    .tabItem {
+                        Image("Home")
+                        Text("首頁")
+                    }
+                Backpack()
+                    .tabItem {
+                        Image("Backpack")
+                        Text("背包")
+                    }
+                MoodReportView()
+                    .tabItem {
+                        Image("First_Aid_Kit")
+                        Text("急救箱")
+                    }
+                HRV()
+                    .tabItem {
+                        Image("Month_Report")
+                        Text("月報")
+                    }
+            }
+            .accentColor(Color.brown)
+
+            if lockManager.isLocked {
+                AppLockUnlockView()
+                    .transition(.opacity)
+            }
         }
-        .accentColor(Color.brown)
+        .animation(.easeInOut(duration: 0.25), value: lockManager.isLocked)
     }
 }
 

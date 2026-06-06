@@ -177,7 +177,6 @@ private extension Backpack {
             ForEach(systemWeekdays, id: \.self) { day in
                 Text(day)
                     .font(.system(size: 16, weight: .bold, design: .serif))
-                    .foregroundStyle(.secondary)
                     .foregroundStyle(Color(hex: "#000000"))
                     .frame(maxWidth: .infinity)
                     .padding(.vertical, 15)
@@ -366,11 +365,15 @@ private extension Backpack {
     }
     
     func monthString(from date: Date) -> String {
+        return Self.monthFormatter.string(from: date).uppercased()
+    }
+
+    private static let monthFormatter: DateFormatter = {
         let formatter = DateFormatter()
         formatter.dateFormat = "MMMM"
         formatter.locale = Locale(identifier: "en_US")
-        return formatter.string(from: date).uppercased()
-    }
+        return formatter
+    }()
     
     func daysInMonth(for date: Date) -> Int {
         guard let range = calendar.range(of: .day, in: .month, for: date) else { return 30 }

@@ -19,7 +19,6 @@ struct HomeView: View {
     
     // 讀入問題庫
     @State private var questionManager = DailyQuestionManager()
-    // 請加在 HomeView 內部的最上方
     @Environment(\.modelContext) private var modelContext
     @State private var selectedQuestion: JournalQuestion?
 
@@ -35,13 +34,12 @@ struct HomeView: View {
     var body: some View {
         NavigationStack {
             ZStack(alignment: .topTrailing) {
-                // 1. 最底層的海洋 (按鈕已外移至主畫面 ZStack 計算，徹底解除 Canvas 負擔)
+                // 1. 最底層的海洋 
                 SeaSceneView(
                     isBlurred: isShowingQuestion,
                     theme: currentTheme
                 )
                 
-                // 🌟 【隱形觸控層】直接放在主 ZStack，100% 繞過 Canvas 編譯地獄，永遠不超時
                 GeometryReader { proxy in
                     let cx = proxy.size.width / 2
                     let cy = proxy.size.height / 2
@@ -134,7 +132,8 @@ struct HomeView: View {
                         }
                     // ... (QuestionView 保持不變)
                     if let question = selectedQuestion {
-                        QuestionView(isPresented: $isShowingQuestion, question: question) // 將今天隨機抽到的題目物件當作參數傳入
+                        QuestionView(isPresented: $isShowingQuestion, question: question)
+                            .frame(maxWidth: .infinity, maxHeight: .infinity)
                             .transition(.asymmetric(
                                 insertion: .scale(scale: 0.9).combined(with: .opacity),
                                 removal: .scale(scale: 1.1).combined(with: .opacity)
@@ -184,8 +183,7 @@ struct HomeView: View {
 
     // 觸覺反饋函數
     private func triggerHaptic(style: UIImpactFeedbackGenerator.FeedbackStyle) {
-        let generator = UIImpactFeedbackGenerator(style: style)
-        let _ = generator.impactOccurred()
+        UIImpactFeedbackGenerator(style: style).impactOccurred()
     }
 
 
@@ -252,7 +250,7 @@ struct SeaSceneView: View {
                 )
                 Image("trashcan").resizable().frame(width: 120, height: 120)
                     .tag("trashcan")
-                Image("islandDry").tag("island")
+                Image("islandDry").tag("islandDry")
             }
             .blur(radius: isBlurred ? 15 : 0)
             .ignoresSafeArea()
