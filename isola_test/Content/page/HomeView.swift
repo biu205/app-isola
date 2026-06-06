@@ -130,7 +130,6 @@ struct HomeView: View {
                         .onTapGesture {
                             dismissKeyboard()
                         }
-                    // ... (QuestionView 保持不變)
                     if let question = selectedQuestion {
                         QuestionView(isPresented: $isShowingQuestion, question: question)
                             .frame(maxWidth: .infinity, maxHeight: .infinity)
@@ -162,7 +161,6 @@ struct HomeView: View {
                 
             }
             .task {
-                    // 自動傳入環境中的 modelContext 執行 Firebase 檢查與選題 凌晨切換時間12點
                     await questionManager.initializeDailyQuestions(modelContext: modelContext)
                 print("🔵 初始化完成，todayDailyQuestion = \(String(describing: questionManager.todayDailyQuestion))")
                 }
