@@ -112,7 +112,7 @@ private extension Backpack {
     // 日記行
     func diaryRow(_ entry: DiaryEntry) -> some View {
         // 心情索引
-        let moodIndex = max(0, min(4, entry.moodIndex))
+        let moodIndex = max(0, min(4, entry.moodIndex ?? 2))
         // 截斷內容
         let truncatedContent = entry.content.count > 10
             ? String(entry.content.prefix(10)) + "..."
@@ -408,7 +408,7 @@ private extension Backpack {
             return emptyMoodImage
         }
 
-        let totalMood = dayEntries.reduce(0) { $0 + $1.moodIndex }
+        let totalMood = dayEntries.reduce(0) { $0 + ($1.moodIndex ?? 2) }
         let averageMood = Double(totalMood) / Double(dayEntries.count)
         let roundedMoodIndex = Int(averageMood.rounded())
         let safeMoodIndex = max(0, min(moodImages.count - 1, roundedMoodIndex))
@@ -511,13 +511,13 @@ struct EditDiaryView: View {
                 // 💡 新增：顯示當時的心情狀態（不可修改，作為回憶標籤）
                 Section(header: Text("當時的心情")) {
                     HStack(spacing: 15) {
-                        Image(moodImages[max(0, min(4, entry.moodIndex))])
+                        Image(moodImages[max(0, min(4, entry.moodIndex ?? 2))])
                             .resizable()
                             .scaledToFit()
                             .frame(width: 60, height: 60)
 
                         VStack(alignment: .leading) {
-                            Text(moodNames[max(0, min(4, entry.moodIndex))])
+                            Text(moodNames[max(0, min(4, entry.moodIndex ?? 2))])
                                 .font(.headline)
                             Text(entry.date, style: .date)
                                 .font(.caption)
