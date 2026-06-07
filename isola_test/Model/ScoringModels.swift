@@ -26,11 +26,11 @@ enum GradeLevel: String {
 
     var imageName: String {
         switch self {
-        case .a: return "非常愉快度Ｑ"
-        case .b: return "超級健康度Ｑ"
-        case .c: return "度Ｑ"
-        case .d: return "不愉快度Ｑ"
-        case .e: return "非常不愉快度Ｑ"
+        case .a: return "超級健康度Ｑ"
+        case .b: return "健康度Ｑ"
+        case .c: return "普通度Ｑ"
+        case .d: return "有點不健康度Ｑ"
+        case .e: return "不健康度Ｑ"
         }
     }
 

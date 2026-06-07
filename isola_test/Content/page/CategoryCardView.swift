@@ -13,7 +13,7 @@ struct CategoryCardView: View {
                     .foregroundStyle(Color.black.opacity(0.85))
 
                 Text(cat.subtitle)
-                    .font(.caption)
+                    .font(.system(size: 14))
                     .foregroundStyle(Color.black.opacity(0.6))
                     .lineLimit(2)
                     .fixedSize(horizontal: false, vertical: true)
@@ -25,6 +25,8 @@ struct CategoryCardView: View {
 
             ArcGaugeView(score: categoryScore.score, grade: categoryScore.grade)
                 .frame(width: 80, height: 80)
+                .foregroundStyle(Color.black.opacity(0.85))
+
         }
         .padding(.horizontal, 20)
         .padding(.vertical, 18)

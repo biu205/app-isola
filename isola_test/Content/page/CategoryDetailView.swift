@@ -12,6 +12,7 @@ struct CategoryDetailView: View {
                 ForEach(category.metrics, id: \.self) { metric in
                     metricCard(metric)
                 }
+                
             }
             .padding(.horizontal, 16)
             .padding(.bottom, 32)
@@ -29,14 +30,17 @@ struct CategoryDetailView: View {
             VStack(alignment: .leading, spacing: 4) {
                 Text(category.subtitle)
                     .font(.caption)
-                    .foregroundStyle(.secondary)
+                    .foregroundStyle(Color.black.opacity(0.85))
+
                 if let score = catScore?.score {
                     HStack(alignment: .firstTextBaseline, spacing: 4) {
                         Text("\(Int(score.rounded()))")
                             .font(.system(size: 44, weight: .bold, design: .rounded))
+                            .foregroundStyle(Color.black.opacity(0.9))
+
                         Text("分")
                             .font(.title3)
-                            .foregroundStyle(.secondary)
+                            .foregroundStyle(Color.black.opacity(0.85))
                     }
                 } else {
                     Text("資料不足")
@@ -47,6 +51,8 @@ struct CategoryDetailView: View {
             Spacer()
             ArcGaugeView(score: catScore?.score, grade: catScore?.grade)
                 .frame(width: 90, height: 90)
+                .foregroundStyle(Color.black.opacity(0.9))
+
         }
         .padding(20)
         .background(category.cardColor)

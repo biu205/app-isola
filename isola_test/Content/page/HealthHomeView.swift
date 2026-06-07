@@ -39,7 +39,8 @@ struct HealthHomeView: View {
                 Image(imageName)
                     .resizable()
                     .scaledToFit()
-                    .frame(width: 230, height: 230)
+                    .frame(width: 230, height: 180)
+                    // .background(Color.black.opacity(0.9))
             } else {
                 Text("🫀")
                     .font(.system(size: 80))
@@ -47,6 +48,7 @@ struct HealthHomeView: View {
 
             if let score = overall.total {
                 HStack(alignment: .firstTextBaseline, spacing: 6) {
+                    Text(" ")
                     Text("\(Int(score.rounded()))")
                         .font(.system(size: 48, weight: .bold, design: .rounded))
                     Text("分")
@@ -63,7 +65,7 @@ struct HealthHomeView: View {
             
             Spacer()
         }
-        .frame(maxWidth: .infinity, minHeight: 280)
+        .frame(maxWidth: .infinity, minHeight: 250)
         .background(pageBackground)
         .clipShape(RoundedRectangle(cornerRadius: 24))
     }
