@@ -4,7 +4,6 @@
 //
 //  Created by Biu on 2026/6/7.
 //
-
 import SwiftUI
 import SwiftData
 
@@ -30,7 +29,7 @@ struct FreeNoteView: View {
                 .shadow(color: .black.opacity(0.15), radius: 20, x: 0, y: 10)
             
             // 介面層
-            VStack {
+            VStack(spacing: 0) {
                 // 頂部導覽列
                 HStack {
                     Spacer()
@@ -50,134 +49,129 @@ struct FreeNoteView: View {
                 .padding(.top, 150)
                 .padding(.horizontal, 30)
                 
-                // 內容區
-                VStack(spacing: 15) {
-                    // 標題
-                    Text("隨手日記紀錄")
-                        .font(.system(.headline, design: .serif))
-                        .fontWeight(.medium)
-                        .foregroundColor(.black.opacity(0.7))
-                        .padding(.top, 20)
-                    
-                    // 說明文字
-                    Text("記錄一下都法！")
-                        .font(.system(.body, design: .serif))
-                        .foregroundColor(.black.opacity(0.6))
-                    
-                    // --- 照片區域 ---
-                    VStack(spacing: 12) {
-                        // 照片網格顯示
-                        if !selectedImages.isEmpty {
-                            ZStack(alignment: .topTrailing) {
-                                HStack(spacing: 8) {
-                                    ForEach(0..<min(3, selectedImages.count), id: \.self) { index in
-                                        ZStack(alignment: .topTrailing) {
-                                            Image(uiImage: selectedImages[index])
-                                                .resizable()
-                                                .scaledToFill()
-                                                .frame(height: 80)
-                                                .clipShape(RoundedRectangle(cornerRadius: 8))
-                                            
-                                            Button(action: {
-                                                selectedImages.remove(at: index)
-                                                UIImpactFeedbackGenerator(style: .light).impactOccurred()
-                                            }) {
-                                                Image(systemName: "xmark.circle.fill")
-                                                    .font(.system(size: 18))
-                                                    .foregroundColor(.red.opacity(0.8))
-                                                    .background(Color.white.clipShape(Circle()))
-                                            }
-                                            .padding(6)
-                                        }
-                                    }
-                                    
-                                    Spacer()
-                                }
-                                
-                                // 顯示 +N（如果超過3張）
-                                if selectedImages.count > 3 {
-                                    Text("+\(selectedImages.count - 3)")
-                                        .font(.system(.headline, design: .serif))
-                                        .foregroundColor(.brown)
-                                        .padding(8)
-                                }
-                            }
-                            .padding(.horizontal, 20)
-                        }
+                // 內容區（可滾動）
+                ScrollView {
+                    VStack(spacing: 10) {
+                        // 標題
+                        Text("隨手日記紀錄")
+                            .font(.system(.title2, design: .serif))
+                            .fontWeight(.medium)
+                            .foregroundColor(.black.opacity(0.7))
+                            .padding(.top, 20)
                         
-                        // 三個操作按鈕
-                        HStack(spacing: 16) {
-                            // 拍照按鈕
-                            Button(action: {
-                                cameraSourceType = .camera
-                                showImagePicker = true
-                            }) {
-                                VStack(spacing: 4) {
-                                    Image(systemName: "camera.fill")
-                                        .font(.system(size: 18))
-                                    Text("拍照")
-                                        .font(.system(size: 12, design: .serif))
-                                }
-                                .foregroundColor(.brown)
-                                .frame(maxWidth: .infinity)
-                                .padding(.vertical, 8)
-                                .background(Color.brown.opacity(0.1))
-                                .clipShape(RoundedRectangle(cornerRadius: 8))
+                        // 說明文字
+                        Text("記錄一下任何想法！")
+                            .font(.system(.body, design: .serif))
+                            .foregroundColor(.black.opacity(0.6))
+                        
+                        
+                        // 文字輸入區域
+                        ZStack(alignment: .topLeading) {
+                            if inputText.isEmpty {
+                                Text("請輸入...")
+                                    .font(.system(size: 18, design: .serif))
+                                    .foregroundColor(.gray.opacity(0.4))
+                                    .multilineTextAlignment(.leading)
+                                    .padding(.horizontal, 10)
+                                    .padding(.vertical, 10)
+                                    .allowsHitTesting(false)
                             }
-                            .disabled(selectedImages.count >= 5)
-                            .opacity(selectedImages.count >= 5 ? 0.5 : 1)
                             
-                            // 上傳照片按鈕
-                            Button(action: {
-                                showPhotoPicker = true
-                            }) {
-                                VStack(spacing: 4) {
-                                    Image(systemName: "photo.fill")
-                                        .font(.system(size: 18))
-                                    Text("上傳照片")
-                                        .font(.system(size: 12, design: .serif))
-                                }
-                                .foregroundColor(.brown)
-                                .frame(maxWidth: .infinity)
-                                .padding(.vertical, 8)
-                                .background(Color.brown.opacity(0.1))
-                                .clipShape(RoundedRectangle(cornerRadius: 8))
-                            }
-                            .disabled(selectedImages.count >= 5)
-                            .opacity(selectedImages.count >= 5 ? 0.5 : 1)
-                        }
-                        .padding(.horizontal, 20)
-                    }
-                    
-                    // 文字輸入區域
-                    ZStack(alignment: .topLeading) {
-                        if inputText.isEmpty {
-                            Text("請輸入")
+                            TextEditor(text: $inputText)
                                 .font(.system(size: 18, design: .serif))
-                                .foregroundColor(.gray.opacity(0.4))
-                                .multilineTextAlignment(.leading)
-                                .padding(.horizontal, 15)
-                                .padding(.vertical, 18)
-                                .allowsHitTesting(false)
+                                .scrollContentBackground(.hidden)
+                                .background(Color.clear)
+                                .lineSpacing(8)
+                                .padding(10)
+                                .frame(maxWidth: 250, maxHeight: .infinity)
+                                .foregroundColor(.black.opacity(0.8))
+                            
+                            
                         }
+                        .frame(height: 145)
                         
-                        TextEditor(text: $inputText)
-                            .font(.system(size: 18, design: .serif))
-                            .scrollContentBackground(.hidden)
-                            .background(Color.clear)
-                            .lineSpacing(8)
-                            .padding(10)
-                            .frame(maxWidth: 250, maxHeight: .infinity)
-                            .foregroundColor(.black.opacity(0.8))
-                    }
-                    .frame(height: 180)
-                    
-                    Spacer()
+                        // --- 照片區域 ---
+                        ZStack(alignment: .topLeading) {
+                            if !selectedImages.isEmpty {
+                                VStack(spacing: 8) {
+                                    ScrollView(.horizontal, showsIndicators: false) {
+                                        HStack(spacing: 8) {
+                                            ForEach(0..<selectedImages.count, id: \.self) { index in
+                                                ZStack(alignment: .topTrailing) {
+                                                    Image(uiImage: selectedImages[index])
+                                                        .resizable()
+                                                        .scaledToFit()
+                                                        .frame(height: 65)
+                                                        .clipShape(RoundedRectangle(cornerRadius: 8))
+                                                    
+                                                    Button(action: {
+                                                        selectedImages.remove(at: index)
+                                                        UIImpactFeedbackGenerator(style: .light).impactOccurred()
+                                                    }) {
+                                                        Image(systemName: "xmark.circle.fill")
+                                                            .font(.system(size: 16))
+                                                            .foregroundColor(.gray.opacity(0.8))
+                                                    }
+                                                    .padding(4)
+                                                }
+                                            }
+                                        }
+                                        
+                                        .padding(.horizontal, 86)
+                                    }
+                                    .scrollClipDisabled()
+                                }
+                            }}.frame(height: 70)
+                        
+                        
+                        // --- 三個按鈕 放在文字區域下方 ---
+                        
                 }
-                .frame(maxHeight: .infinity)
-                .padding(.bottom, 100)
-                
-                // 儲存按鈕
+                    HStack(spacing: 12) {
+                        // 拍照按鈕
+                        Button(action: {
+                            cameraSourceType = .camera
+                            showImagePicker = true
+                        }) {
+                            VStack(spacing: 3) {
+                                Image(systemName: "camera.fill")
+                                    .font(.system(size: 14))
+                                Text("拍照")
+                                    .font(.system(size: 10, design: .serif))
+                            }
+                            .foregroundColor(.brown)
+                            .frame(width: 60)
+                            .padding(.vertical, 6)
+                            .background(Color.brown.opacity(0.08))
+                            .clipShape(RoundedRectangle(cornerRadius: 8))
+                        }
+                        .disabled(selectedImages.count >= 2)
+                        .opacity(selectedImages.count >= 2 ? 0.5 : 1)
+                        
+                        // 上傳照片按鈕
+                        Button(action: {
+                            showPhotoPicker = true
+                        }) {
+                            VStack(spacing: 3) {
+                                Image(systemName: "photo.fill")
+                                    .font(.system(size: 14))
+                                Text("上傳照片")
+                                    .font(.system(size: 10, design: .serif))
+                            }
+                            .foregroundColor(.brown)
+                            .frame(width: 60)
+                            .padding(.vertical, 6)
+                            .background(Color.brown.opacity(0.08))
+                            .clipShape(RoundedRectangle(cornerRadius: 8))
+                        }
+                        .disabled(selectedImages.count >= 2)
+                        .opacity(selectedImages.count >= 2 ? 0.5 : 1)
+                    }
+                    .padding(.horizontal, 1)
+                    .padding(.top, 15)
+                    .padding(.bottom, 20)
+                }
+                // 「封入瓶子」按鈕（固定在下方）
                 Button(action: saveAndClose) {
                     Text("封入瓶子")
                         .font(.headline)
@@ -191,14 +185,14 @@ struct FreeNoteView: View {
                 }
                 .disabled(inputText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
                 .padding(.horizontal, 100)
-                .padding(.bottom, 30)
+                .padding(.bottom, 190)
             }
         }
         .sheet(isPresented: $showImagePicker) {
             ImagePicker(image: Binding(
                 get: { nil },
                 set: { newImage in
-                    if let image = newImage, selectedImages.count < 5 {
+                    if let image = newImage, selectedImages.count < 2 {
                         selectedImages.append(image)
                         UIImpactFeedbackGenerator(style: .light).impactOccurred()
                     }
