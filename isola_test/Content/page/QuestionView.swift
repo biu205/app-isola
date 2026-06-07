@@ -1,5 +1,6 @@
 import SwiftUI
 import SwiftData
+import PhotosUI
 
 struct QuestionView: View {
     @Environment(\.modelContext) private var modelContext
@@ -82,7 +83,7 @@ struct QuestionView: View {
     // --- 子視圖：心情選擇 ---
     private var moodSelectionSection: some View {
         VStack(spacing: 30) {
-            Text(question.text)
+            Text("今天心情如何呢？")
                 .font(.system(.title3, design: .serif))
                 .fontWeight(.medium)
                 .foregroundColor(.black.opacity(0.7))

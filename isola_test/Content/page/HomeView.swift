@@ -64,10 +64,10 @@ struct HomeView: View {
                             print("🔴 沒有題目")
                         }
                     }) {
-                        Color.black.opacity(0.001)
+                        Color.black.opacity(0.0001)
                     }
-                    .frame(width: 80, height: 95)
-                    .position(x: cx + 80, y: cy + 205)
+                    .frame(width: 100, height: 105)
+                    .position(x: cx + 110, y: cy + 240)
                     // .disabled(questionManager.todayDailyQuestion == nil)
 
                     // 垃圾桶按鈕
@@ -80,12 +80,30 @@ struct HomeView: View {
                             isShowingQuestion = true
                         }
                     }) {
-                        Color.black.opacity(0.001)
+                        Color.black.opacity(0.0001)
                     }
-                    .frame(width: 100, height: 70)
-                    .position(x: cx - 100, y: cy + 120)
+                    .frame(width: 100, height: 100)
+                    .position(x: cx - 50, y: cy + 210)
+                    
+                    Button(action: {
+                        triggerHaptic(style: .light)
+                        
+                        withAnimation(.easeInOut(duration: 0.2)) {
+                            isHidingTopButtons = true
+                        }
+                        withAnimation(.spring(response: 0.4, dampingFraction: 0.7)) {
+                            isShowingQuestion = true
+                        }
+                    }) {
+                        Color.black.opacity(0.0001)
+                    }
+                    .frame(width: 70, height: 90)
+                    .position(x: cx - 130, y: cy + 80)
+                    
                 }
                 .ignoresSafeArea()
+                
+                
                 
                 // --- 新增：配件顯示圖層 ---
                 // 這裡使用 GeometryReader 是為了獲取跟 Canvas 一樣的螢幕中心點
@@ -201,8 +219,9 @@ struct SeaSceneView: View {
                 guard let dayBackground = context.resolveSymbol(id: "bg-day"),
                     let nightBackground = context.resolveSymbol(id: "bg-night"),
                     let island = context.resolveSymbol(id: "island"),
-                    let bottle = context.resolveSymbol(id: "bottle"),
-                    let trashcan = context.resolveSymbol(id: "trashcan")
+                    let bottle2 = context.resolveSymbol(id: "bottle2"),
+                    let bottle = context.resolveSymbol(id: "bottle")
+                        
                 else { return }
 
                 let midY = size.height / 2
@@ -223,18 +242,25 @@ struct SeaSceneView: View {
                 // --- 小島、瓶子、垃圾罐 ---
 
                 // 瓶子
-                let bottleY = midY + 150 + sin(time * 1.3) * 10
+                let bottle2Y = midY + 150 + sin(time * 1.45) * 10
                 context.draw(
-                    bottle,
-                    at: CGPoint(x: centerX + 80, y: bottleY + 70)
+                    bottle2,
+                    at: CGPoint(x: centerX + 110, y: bottle2Y + 80)
                 )
 
                 // 垃圾桶
-                let trashcanY = midY + 120 + sin(time * 1.1) * 10
+                let bottleY = midY + 120 + sin(time * 1.3) * 10
                 context.draw(
-                    trashcan,
-                    at: CGPoint(x: centerX - 100, y: trashcanY)
+                    bottle,
+                    at: CGPoint(x: centerX - 50, y: bottleY + 90)
                 )
+                let buoyY = midY + 120 + sin(time * 1.15) * 10
+                if let buoy = context.resolveSymbol(id: "buoy") {
+                    context.draw(
+                        buoy,
+                        at: CGPoint(x: centerX - 130, y: buoyY - 40)
+                    )
+                }
 
             } symbols: {
                 Image("background").tag("bg-day")
@@ -243,11 +269,12 @@ struct SeaSceneView: View {
                 Image("dark").tag("dark")
                 Image("light").tag("light")
                 Image("island").tag("island")
-                Image("bottle").resizable().frame(width: 180, height: 180).tag(
-                    "bottle"
+                Image("bottle2").resizable().frame(width: 120, height: 120).tag(
+                    "bottle2"
                 )
-                Image("trashcan").resizable().frame(width: 120, height: 120)
-                    .tag("trashcan")
+                Image("bottle").resizable().frame(width: 180, height: 180)
+                    .tag("bottle")
+                Image("浮標").resizable().frame(width: 120, height: 120).tag("buoy")
                 Image("islandDry").tag("islandDry")
             }
             .blur(radius: isBlurred ? 15 : 0)
