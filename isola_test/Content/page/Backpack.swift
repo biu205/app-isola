@@ -9,8 +9,13 @@ struct Backpack: View {
     @State private var selectedMonth: Int = 4
     @Query(sort: \DiaryEntry.date, order: .reverse) private var entries: [DiaryEntry]
     @State private var entryToEdit: DiaryEntry?
+    @AppStorage("appearanceMode") private var appearanceMode: Int = AppTheme.system.rawValue
 
-    let moodImages = ["非常不愉快度Ｑ1", "不愉快度Ｑ1", "度Ｑ1", "愉快度Ｑ1", "非常愉快度Ｑ1"]
+    private var currentTheme: AppTheme { AppTheme(rawValue: appearanceMode) ?? .system }
+    private var isDark: Bool { currentTheme.colorScheme == .dark }
+    private var pageBackground: Color { isDark ? Color(hex: "#151D2B") : Color(hex: "#FDFBF0") }
+
+    let moodImages = ["非常不愉快度Ｑ", "不愉快度Ｑ", "度Ｑ", "愉快度Ｑ", "非常愉快度Ｑ"]
     let moodNames = ["非常不愉快", "不愉快", "一般", "愉快", "非常愉快"]
     let emptyMoodImage = "空白沒寫度Ｑ"
     let futureMoodImage = "還沒到度Ｑ"
@@ -21,7 +26,7 @@ struct Backpack: View {
     var body: some View {
         ZStack {
             // 背景色
-            Color(hex: "#FFFCF1")
+            pageBackground
                 .ignoresSafeArea()
             // 可滑動的頁面
             ScrollView {
@@ -46,6 +51,7 @@ struct Backpack: View {
             }
         }
         // 編輯日記的彈出式視窗
+        .preferredColorScheme(currentTheme.colorScheme)
         .sheet(item: $entryToEdit) { entry in
             EditDiaryView(entry: entry)
         }
@@ -137,7 +143,7 @@ private extension Backpack {
                     HStack(alignment: .lastTextBaseline) {
                         Text(entry.title)
                             .font(.system(.headline, design: .serif))
-                            .foregroundColor(.black)
+                            .foregroundColor(.primary)
                             .lineLimit(1)
                             .multilineTextAlignment(.leading)
 
@@ -164,7 +170,7 @@ private extension Backpack {
             let year = calendar.component(.year, from: currentMonth)
             Text("\(String(year))")
                 .font(.system(size: 20, weight: .bold, design: .serif))
-                .foregroundColor(.black)
+                .foregroundColor(.primary)
         }
     }
     
@@ -177,7 +183,7 @@ private extension Backpack {
             ForEach(systemWeekdays, id: \.self) { day in
                 Text(day)
                     .font(.system(size: 16, weight: .bold, design: .serif))
-                    .foregroundStyle(Color(hex: "#000000"))
+                    .foregroundStyle(.primary)
                     .frame(maxWidth: .infinity)
                     .padding(.vertical, 15)
             }
@@ -191,15 +197,15 @@ private extension Backpack {
             Button(action: { changeMonth(by: -1) }) {
                 Image(systemName: "chevron.left")
                     .font(.title2)
-                    .foregroundStyle(.black)
+                    .foregroundStyle(.primary)
             }
-            
+
             Spacer()
-            
+
             Text(monthString(from: currentMonth))
                 .font(.system(size: 32, weight: .medium, design: .serif))
                 .tracking(4)
-                .foregroundColor(.black)
+                .foregroundColor(.primary)
                 .onTapGesture(count: 2) {
                     let now = Date()
                     currentMonth = now
@@ -211,13 +217,13 @@ private extension Backpack {
                     selectedMonth = calendar.component(.month, from: currentMonth)
                     showDatePicker = true
                 }
-            
+
             Spacer()
-            
+
             Button(action: { changeMonth(by: 1) }) {
                 Image(systemName: "chevron.right")
                     .font(.title2)
-                    .foregroundStyle(.black)
+                    .foregroundStyle(.primary)
             }
         }
         .padding(.horizontal, 40)
@@ -240,7 +246,7 @@ private extension Backpack {
                 VStack(spacing: 8) {
                     Text("\(day)")
                         .font(.system(size: 16, design: .serif))
-                        .foregroundStyle(.black)
+                        .foregroundStyle(.primary)
                     
                     Button {
                         openLatestEntry(for: date)
@@ -248,7 +254,7 @@ private extension Backpack {
                         Image(moodImageName(for: date))
                             .resizable()
                             .scaledToFit()
-                            .frame(height: 45)
+                            .frame(width: 50, height: 50)
                     }
                     .buttonStyle(.plain)
                 }
@@ -286,13 +292,13 @@ struct DiarySwipeRow<Content: View>: View {
 
             content
                 .padding(12)
-                .background(Color.white)
+                .background(Color(.secondarySystemGroupedBackground))
                 .clipShape(RoundedRectangle(cornerRadius: 16))
                 .overlay(
                     RoundedRectangle(cornerRadius: 16)
-                        .stroke(Color.black.opacity(0.08), lineWidth: 0.8)
+                        .stroke(Color.primary.opacity(0.08), lineWidth: 0.8)
                 )
-                .shadow(color: Color.black.opacity(0.03), radius: 5, x: 0, y: 2)
+                .shadow(color: Color.primary.opacity(0.03), radius: 5, x: 0, y: 2)
                 .contentShape(RoundedRectangle(cornerRadius: 16))
                 .opacity(isDeleting ? 0 : 1)
                 .scaleEffect(isDeleting ? 0.94 : 1)

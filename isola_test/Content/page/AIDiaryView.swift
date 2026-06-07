@@ -16,7 +16,8 @@ struct DiaryPageItem: Identifiable {
 }
 
 struct AIDiaryView: View {
-    @Environment(\.dismiss) var dismiss // 用於點擊「確認完畢」時返回上一頁
+    @Environment(\.dismiss) var dismiss
+    @Environment(\.colorScheme) private var colorScheme
     
     // 2. 建立四個分頁的資料（對應你的設計圖）
     let diaryPages: [DiaryPageItem] = [
@@ -51,8 +52,8 @@ struct AIDiaryView: View {
 
     var body: some View {
         ZStack {
-            // 背景底色（沿用原本的米黃色）
-            Color(hex: "#FDF9E7").ignoresSafeArea()
+            (colorScheme == .dark ? Color(hex: "#151D2B") : Color(hex: "#FDFBF0"))
+                .ignoresSafeArea()
             
             // 3. 核心分頁元件
             TabView(selection: $currentPage) {
@@ -76,8 +77,9 @@ struct AIDiaryView: View {
 // 4. 單一分頁的佈局元件
 struct SingleDiaryPageView: View {
     let page: DiaryPageItem
-    var onConfirm: () -> Void // 點擊最後一頁按鈕的回呼函式
-    
+    var onConfirm: () -> Void
+    @Environment(\.colorScheme) private var colorScheme
+
     var body: some View {
         VStack(spacing: 30) {
             Spacer()
@@ -85,8 +87,8 @@ struct SingleDiaryPageView: View {
             
             // 日期 / 標題
             Text(page.dateText)
-                .font(.custom("Georgia", size: 24)) // 帶有襯線的字體更像手帳日誌
-                .foregroundColor(Color(hex: "#6D4C41")) // 深咖啡色調
+                .font(.custom("Georgia", size: 24))
+                .foregroundColor(.secondary)
                 .padding(.top, 20)
             
             Spacer()
@@ -103,7 +105,7 @@ struct SingleDiaryPageView: View {
                 
                 Text(page.content)
                     .font(.system(size: 15))
-                    .foregroundColor(.black)
+                    .foregroundColor(.primary)
                     .lineSpacing(8) // 調整行距，讓字體排版更好看
                     .multilineTextAlignment(.center) // 文字置中
                     .padding(.horizontal, 40)
@@ -113,7 +115,7 @@ struct SingleDiaryPageView: View {
                 ScrollView(showsIndicators: false) {
                     Text(page.content)
                         .font(.system(size: 15))
-                        .foregroundColor(.black)
+                        .foregroundColor(.primary)
                         .lineSpacing(8)
                         .multilineTextAlignment(.leading) // 總結頁文字靠左對齊
                         .padding(.horizontal, 40)

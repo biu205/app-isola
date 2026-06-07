@@ -28,7 +28,7 @@ struct SettingView: View {
     }
 
     private var backgroundColor: Color {
-        isDark ? Color(hex: "#1C1C1E") : Color(hex: "#FDFBF0")
+        isDark ? Color(hex: "#151D2B") : Color(hex: "#FDFBF0")
     }
 
     private var circleColor: Color {
@@ -109,8 +109,26 @@ struct SettingView: View {
                             .padding(.horizontal)
                             .frame(height: 60)
 
-                            // 其他靜態欄位
-                            StaticRow(title: "系統管理", isDark: isDark)
+                            // 隱私設定（開啟 iOS 系統設定 → 此 App 的權限頁）
+                            VStack(spacing: 0) {
+                                Divider()
+                                Button {
+                                    if let url = URL(string: UIApplication.openSettingsURLString) {
+                                        UIApplication.shared.open(url)
+                                    }
+                                } label: {
+                                    HStack {
+                                        Text("系統設定")
+                                            .foregroundColor(textColor)
+                                        Spacer()
+                                        Image(systemName: "chevron.right")
+                                            .font(.caption)
+                                            .foregroundColor(.gray)
+                                    }
+                                    .padding()
+                                    .frame(height: 60)
+                                }
+                            }
                             StaticRow(title: "通知設定", isDark: isDark)
 
                             // App鎖 (NavigationLink)

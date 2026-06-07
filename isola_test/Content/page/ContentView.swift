@@ -28,6 +28,7 @@ struct YourApp: App {
 
 struct ContentView: View {
     @State private var lockManager = AppLockManager.shared
+    @State private var healthVM = HealthDashboardViewModel()
 
     var body: some View {
         ZStack {
@@ -42,12 +43,13 @@ struct ContentView: View {
                         Image("Backpack")
                         Text("背包")
                     }
-                MoodReportView()
+                HealthHomeView()
+                    .environment(healthVM)
                     .tabItem {
                         Image("First_Aid_Kit")
-                        Text("急救箱")
+                        Text("健康")
                     }
-                HRV()
+                MoodReportView()
                     .tabItem {
                         Image("Month_Report")
                         Text("月報")
@@ -61,6 +63,9 @@ struct ContentView: View {
             }
         }
         .animation(.easeInOut(duration: 0.25), value: lockManager.isLocked)
+        .task {
+            healthVM.requestAuthorization()
+        }
     }
 }
 
