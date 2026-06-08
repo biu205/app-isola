@@ -25,7 +25,13 @@ enum GeminiError: LocalizedError {
 }
 
 actor GeminiService {
-    static let apiKey = "AIzaSyB3mfX7cqA-iAZ8rue34pCxVD5thbq9d10"
+    static let apiKey: String = {
+        guard let url = Bundle.main.url(forResource: "Secrets", withExtension: "plist"),
+              let dict = NSDictionary(contentsOf: url),
+              let key = dict["GEMINI_API_KEY"] as? String
+        else { return "YOUR_GEMINI_API_KEY" }
+        return key
+    }()
 
     private let model = "gemini-3.1-flash-lite"
 
