@@ -19,6 +19,7 @@ enum ActiveSheet {
 struct HomeView: View {
     @State private var activeSheet: ActiveSheet? = nil
     @State private var isHidingTopButtons = false
+    @State private var showDuQChat = false
     @AppStorage("appearanceMode") private var appearanceMode: Int = AppTheme.system.rawValue
     // 讀取換裝頁儲存的 ID
     @AppStorage("selectedAccessoryID") private var selectedAccessoryID: Int = -1
@@ -114,6 +115,16 @@ struct HomeView: View {
                     }
                     .frame(width: 70, height: 90)
                     .position(x: cx - 130, y: cy + 80)
+
+                    // 度Q按鈕 - 開啟 AI 陪聊
+                    Button(action: {
+                        triggerHaptic(style: .medium)
+                        showDuQChat = true
+                    }) {
+                        Color.black.opacity(0.00001)
+                    }
+                    .frame(width: 250, height: 170)
+                    .position(x: cx + 50, y: cy - 20)
                     
                 }
                 .ignoresSafeArea()
@@ -234,6 +245,9 @@ struct HomeView: View {
                         isHidingTopButtons = false
                     }
                 }
+            }
+            .fullScreenCover(isPresented: $showDuQChat) {
+                DuQChatView()
             }
         }
     }

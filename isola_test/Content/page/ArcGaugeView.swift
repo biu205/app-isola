@@ -26,7 +26,7 @@ struct ArcGaugeView: View {
                     Circle()
                         .trim(from: 0, to: fraction)
                         .stroke(
-                            (grade?.color ?? .gray).opacity(0.9),
+                            grade?.color ?? .gray,
                             style: StrokeStyle(lineWidth: lineWidth, lineCap: .round)
                         )
                         .rotationEffect(.degrees(startAngle))

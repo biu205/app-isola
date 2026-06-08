@@ -216,7 +216,7 @@ struct FreeNoteView: View {
         }
         
         let newEntry = DiaryEntry(
-            title: "隨手日記",
+            title: "隨手記",
             content: inputText,
             moodIndex: nil,  // 浮標沒有心情指數
             type: "freeNote",

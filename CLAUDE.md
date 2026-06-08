@@ -42,13 +42,14 @@ isola_test/
 |-----|------|---------|
 | 首頁 | `HomeView` | Animated island scene; tap bottle to journal |
 | 背包 | `Backpack` | Calendar diary list |
-| 月報 | `MoodReportView` (`First_aid_Kit.swift`) | Mood report |
 | 健康 | `HealthHomeView` | HealthKit biometric dashboard |
+| 月報 | `MoodReportView` (`First_aid_Kit.swift`) | Mood report |
 
 ### Journaling Data Flow
 1. **Firebase → SwiftData** (`DailyQuestionManager`): On app launch, checks `app_config/questions_info.questionVersion` against a local version stored in `UserDefaults`. If outdated, downloads all docs from `Question_data` collection and upserts into SwiftData `JournalQuestion` records.
 2. **Daily selection**: `loadOrRefreshDailyQuestions` picks one `.daily` and one `.introspection` question per day using a weighted-random algorithm (`pickSmartRandom`) that favours questions not shown recently. Selections persist via `UserDefaults`.
-3. **Journal entry**: `QuestionView` is a two-step sheet — step 0: mood slider → step 1: text entry → saves `DiaryEntry` into SwiftData.
+3. **Journal entry**: `QuestionView` (`.daily`) and `IntrospectionView` (`.introspection`) are parallel two-step sheets — step 0: mood slider → step 1: text entry → saves `DiaryEntry` into SwiftData. `FreeNoteView` is a free-form entry sheet with photo attachment support (no question prompt). All three share `ActiveSheet` binding from `HomeView`.
+4. **AI weekly summary**: `AIDiaryView` is a paginated page-flip review of the week's entries, using `DiaryPageItem` structs (hardcoded sample data currently).
 
 ### HealthKit Subsystem
 
@@ -74,6 +75,7 @@ The Health feature is a self-contained stack:
 - `DailyQuestionManager` — `@Observable`; call `initializeDailyQuestions(modelContext:)` from `.task` on `HomeView`
 - `AppLockManager` — `@Observable` singleton; 4-digit PIN (SHA256 in UserDefaults), Face ID/Touch ID, security-question recovery
 - `AppTheme` — enum (`.light`, `.dark`, `.system`); system mode auto-switches dark at 19:00; stored as `Int` via `@AppStorage("appearanceMode")`
+- `Accessory` — plain struct in `Clothes.swift`; defines unlockable island accessories with `unlockThreshold` (entry count). `accessoryData` is the global array.
 
 ### Theming
 `HomePageTheme.swift` owns `AppTheme` and `homeNightOverlayOpacity(at:)`. `SeaSceneView` (inside `HomeView.swift`) uses this to blend between day/night background images in a 60fps `Canvas` animation.
@@ -84,7 +86,7 @@ The Health feature is a self-contained stack:
 ## Patterns
 
 - Use `@Observable` (not `ObservableObject`) for all manager/view-model classes.
-- Persist user preferences with `@AppStorage`; use the key constants already established (e.g. `"appearanceMode"`, `"isola_LocalQuestionVersion"`).
+- Persist user preferences with `@AppStorage`; use the key constants already established (e.g. `"appearanceMode"`, `"isola_LocalQuestionVersion"`, `"userName"`).
 - `Color(hex:)` helper is defined at the bottom of `Backpack.swift` — reuse it rather than redefine.
 - All haptics go through `UIImpactFeedbackGenerator` called directly in button actions (no wrapper).
 - HealthKit views consume `HealthDashboardViewModel` via `@Environment` — never create it inside a leaf view.

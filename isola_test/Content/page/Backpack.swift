@@ -117,8 +117,9 @@ private extension Backpack {
 
     // 日記行
     func diaryRow(_ entry: DiaryEntry) -> some View {
-        // 心情索引
-        let moodIndex = max(0, min(4, entry.moodIndex ?? 2))
+        let moodImageName = entry.type == "freeNote"
+            ? "浮標"
+            : moodImages[max(0, min(4, entry.moodIndex ?? 2))]
         // 截斷內容
         let truncatedContent = entry.content.count > 10
             ? String(entry.content.prefix(10)) + "..."
@@ -132,7 +133,7 @@ private extension Backpack {
         ) {
             // 心情圖片
             HStack(spacing: 16) {
-                Image(moodImages[moodIndex])
+                Image(moodImageName)
                     .resizable()
                     .scaledToFit()
                     .frame(width: 48, height: 48)
@@ -317,7 +318,6 @@ struct DiarySwipeRow<Content: View>: View {
                 .gesture(
                     DragGesture(minimumDistance: 30)
                             .onChanged { value in
-                                // 💡 修改 2：核心關鍵，判斷如果是上下滑動（垂直位移 > 水平位移），就直接 return 不處理
                                 guard abs(value.translation.width) > abs(value.translation.height) else { return }
                                 
                                 isDraggingRow = true
@@ -330,7 +330,6 @@ struct DiarySwipeRow<Content: View>: View {
                                 }
                             }
                             .onEnded { value in
-                                // 💡 修改 3：確保只有在真正執行了橫向拖曳後，才觸發收合或展開邏輯
                                 guard isDraggingRow else { return }
                                 
                                 let projected = value.predictedEndTranslation.width
@@ -514,23 +513,50 @@ struct EditDiaryView: View {
     var body: some View {
         NavigationStack {
             Form {
-                // 💡 新增：顯示當時的心情狀態（不可修改，作為回憶標籤）
                 Section(header: Text("當時的心情")) {
-                    HStack(spacing: 15) {
-                        Image(moodImages[max(0, min(4, entry.moodIndex ?? 2))])
-                            .resizable()
-                            .scaledToFit()
-                            .frame(width: 60, height: 60)
-
-                        VStack(alignment: .leading) {
-                            Text(moodNames[max(0, min(4, entry.moodIndex ?? 2))])
-                                .font(.headline)
+                    if entry.type == "freeNote" {
+                        Text("隨手日記無心情記錄")
+                            .font(.subheadline)
+                            .foregroundColor(.secondary)
+                            .padding(.vertical, 8)
+                    } else {
+                        VStack(alignment: .leading, spacing: 6) {
                             Text(entry.date, style: .date)
                                 .font(.caption)
                                 .foregroundColor(.secondary)
+                            HStack(spacing: 6) {
+                                ForEach(0..<5) { index in
+                                    let selected = (entry.moodIndex ?? 2) == index
+                                    Button {
+                                        entry.moodIndex = index
+                                    } label: {
+                                        VStack(spacing: 3) {
+                                            Image(moodImages[index])
+                                                .resizable()
+                                                .scaledToFit()
+                                                .frame(width: selected ? 48 : 36, height: selected ? 48 : 36)
+                                            Text(moodNames[index])
+                                                .font(.system(size: 9))
+                                                .foregroundColor(selected ? .brown : .secondary)
+                                        }
+                                        .padding(5)
+                                        .background(
+                                            RoundedRectangle(cornerRadius: 8)
+                                                .fill(selected ? Color.brown.opacity(0.1) : Color.clear)
+                                        )
+                                        .overlay(
+                                            RoundedRectangle(cornerRadius: 8)
+                                                .stroke(selected ? Color.brown : Color.clear, lineWidth: 1.5)
+                                        )
+                                        .animation(.spring(response: 0.25, dampingFraction: 0.7), value: entry.moodIndex)
+                                    }
+                                    .buttonStyle(.plain)
+                                }
+                            }
+                            .frame(maxWidth: .infinity)
                         }
+                        .padding(.vertical, 8)
                     }
-                    .padding(.vertical, 8)
                 }
 
                 Section(header: Text("題目")) {
