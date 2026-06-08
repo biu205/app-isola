@@ -26,10 +26,19 @@ enum GeminiError: LocalizedError {
 
 actor GeminiService {
     static let apiKey: String = {
-        guard let url = Bundle.main.url(forResource: "Secrets", withExtension: "plist"),
-              let dict = NSDictionary(contentsOf: url),
-              let key = dict["GEMINI_API_KEY"] as? String
-        else { return "YOUR_GEMINI_API_KEY" }
+        guard let url = Bundle.main.url(forResource: "Secrets", withExtension: "plist") else {
+            print("[Gemini] ❌ Secrets.plist not found in bundle")
+            return "YOUR_GEMINI_API_KEY"
+        }
+        guard let dict = NSDictionary(contentsOf: url) else {
+            print("[Gemini] ❌ Failed to parse Secrets.plist")
+            return "YOUR_GEMINI_API_KEY"
+        }
+        guard let key = dict["GEMINI_API_KEY"] as? String else {
+            print("[Gemini] ❌ GEMINI_API_KEY not found in plist")
+            return "YOUR_GEMINI_API_KEY"
+        }
+        print("[Gemini] ✅ API key loaded")
         return key
     }()
 
@@ -40,6 +49,7 @@ actor GeminiService {
         systemPrompt: String,
         maxTokens: Int = 500
     ) async throws -> String {
+        print("[Gemini] apiKey loaded: \(GeminiService.apiKey.prefix(10))...")
         guard GeminiService.apiKey != "YOUR_GEMINI_API_KEY" else {
             throw GeminiError.apiKeyNotConfigured
         }
@@ -80,6 +90,9 @@ actor GeminiService {
             throw GeminiError.networkError(0)
         }
         guard http.statusCode == 200 else {
+            if let body = String(data: data, encoding: .utf8) {
+                print("[Gemini] HTTP \(http.statusCode): \(body)")
+            }
             throw GeminiError.networkError(http.statusCode)
         }
 
