@@ -5,6 +5,7 @@
 //  Created by Qian Hsu on 2026/4/5.
 //
 import SwiftUI
+import Combine
 
 
 // MARK: - 活躍頁面狀態枚舉
@@ -23,7 +24,11 @@ struct HomeView: View {
     @AppStorage("appearanceMode") private var appearanceMode: Int = AppTheme.system.rawValue
     // 讀取換裝頁儲存的 ID
     @AppStorage("selectedAccessoryID") private var selectedAccessoryID: Int = -1
-    
+
+    // 瓶子已回答狀態（記錄回答日期，00:00 自動重置）
+    @AppStorage("bottleAnsweredDate") private var bottleAnsweredDateStr: String = ""
+    @State private var bottleOpacity: Double = 1.0
+
     // 讀入問題庫
     @State private var questionManager = DailyQuestionManager()
     @Environment(\.modelContext) private var modelContext
@@ -32,6 +37,23 @@ struct HomeView: View {
 
     private var currentTheme: AppTheme {
         AppTheme(rawValue: appearanceMode) ?? .system
+    }
+
+    private static let bottleDateFormatter: DateFormatter = {
+        let f = DateFormatter()
+        f.dateFormat = "yyyy-MM-dd"
+        return f
+    }()
+
+    private var todayDateString: String {
+        Self.bottleDateFormatter.string(from: Date())
+    }
+
+    private func markBottlesAnswered() {
+        bottleAnsweredDateStr = todayDateString
+        withAnimation(.easeOut(duration: 1.5)) {
+            bottleOpacity = 0.0
+        }
     }
     
     // 取得選中的配件資料
@@ -45,7 +67,8 @@ struct HomeView: View {
                 // 1. 最底層的海洋
                 SeaSceneView(
                     isBlurred: activeSheet != nil,
-                    theme: currentTheme
+                    theme: currentTheme,
+                    bottleOpacity: bottleOpacity
                 )
                 
                 GeometryReader { proxy in
@@ -75,6 +98,7 @@ struct HomeView: View {
                     }
                     .frame(width: 100, height: 105)
                     .position(x: cx + 110, y: cy + 240)
+                    .allowsHitTesting(bottleOpacity > 0.01)
 
                     // 垃圾桶按鈕 - bottle（內省問答）
                     Button(action: {
@@ -99,6 +123,7 @@ struct HomeView: View {
                     }
                     .frame(width: 100, height: 100)
                     .position(x: cx - 50, y: cy + 210)
+                    .allowsHitTesting(bottleOpacity > 0.01)
                     
                     // 浮標按鈕 - 隨手日記（不需要題目）
                     Button(action: {
@@ -181,7 +206,8 @@ struct HomeView: View {
                         if let question = selectedQuestion {
                             QuestionView(
                                 activeSheet: $activeSheet,
-                                question: question
+                                question: question,
+                                onSaved: markBottlesAnswered
                             )
                             .transition(.asymmetric(
                                 insertion: .scale(scale: 0.9).combined(with: .opacity),
@@ -193,7 +219,8 @@ struct HomeView: View {
                         if let question = selectedIntrospectionQuestion {
                             IntrospectionView(
                                 activeSheet: $activeSheet,
-                                question: question
+                                question: question,
+                                onSaved: markBottlesAnswered
                             )
                             .transition(.asymmetric(
                                 insertion: .scale(scale: 0.9).combined(with: .opacity),
@@ -239,6 +266,17 @@ struct HomeView: View {
                 print("   todayIntrospectionQuestion = \(String(describing: questionManager.todayIntrospectionQuestion))")
                 }
                 }
+            .onAppear {
+                bottleOpacity = (bottleAnsweredDateStr == todayDateString) ? 0.0 : 1.0
+            }
+            .onReceive(Timer.publish(every: 60, on: .main, in: .common).autoconnect()) { _ in
+                // 新的一天到來時恢復瓶子
+                if bottleAnsweredDateStr != todayDateString, bottleOpacity < 1.0 {
+                    withAnimation(.easeIn(duration: 1.0)) {
+                        bottleOpacity = 1.0
+                    }
+                }
+            }
             .onChange(of: activeSheet) { _, newValue in
                 if newValue == nil {
                     withAnimation(.easeInOut(duration: 0.2)) {
@@ -264,6 +302,7 @@ struct HomeView: View {
 struct SeaSceneView: View {
     let isBlurred: Bool
     let theme: AppTheme
+    let bottleOpacity: Double
 
     var body: some View {
         TimelineView(.periodic(from: .now, by: 1 / 60)) { timeline in
@@ -299,6 +338,7 @@ struct SeaSceneView: View {
 
                 // 瓶子 - bottle2
                 let bottle2Y = midY + 150 + sin(time * 1.45) * 10
+                context.opacity = bottleOpacity
                 context.draw(
                     bottle2,
                     at: CGPoint(x: centerX + 110, y: bottle2Y + 80)
@@ -310,6 +350,7 @@ struct SeaSceneView: View {
                     bottle,
                     at: CGPoint(x: centerX - 50, y: bottleY + 90)
                 )
+                context.opacity = 1.0
                 
                 // 浮標 - buoy
                 let buoyY = midY + 120 + sin(time * 1.15) * 10

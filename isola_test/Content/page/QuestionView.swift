@@ -19,8 +19,8 @@ struct QuestionView: View {
     @State private var cameraSourceType: UIImagePickerController.SourceType = .photoLibrary
     
     let question: JournalQuestion
-    
-    
+    var onSaved: (() -> Void)? = nil
+
     let moodImages = ["非常不愉快度Ｑ", "不愉快度Ｑ", "度Ｑ", "愉快度Ｑ", "非常愉快度Ｑ"]
     let moodName = ["非常不愉快", "不愉快", "一般", "愉快", "非常愉快"]
     
@@ -316,7 +316,9 @@ struct QuestionView: View {
         
         let generator = UINotificationFeedbackGenerator()
         generator.notificationOccurred(.success)
-        
+
+        onSaved?()
+
         withAnimation(.interpolatingSpring(stiffness: 170, damping: 15)) {
             activeSheet = nil
         }
