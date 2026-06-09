@@ -50,6 +50,16 @@ isola_test/
 2. **Daily selection**: `loadOrRefreshDailyQuestions` picks one `.daily` and one `.introspection` question per day using a weighted-random algorithm (`pickSmartRandom`) that favours questions not shown recently. Selections persist via `UserDefaults`.
 3. **Journal entry**: `QuestionView` (`.daily`) and `IntrospectionView` (`.introspection`) are parallel two-step sheets — step 0: mood slider → step 1: text entry → saves `DiaryEntry` into SwiftData. `FreeNoteView` is a free-form entry sheet with photo attachment support (no question prompt). All three share `ActiveSheet` binding from `HomeView`.
 4. **AI weekly summary**: `AIDiaryView` is a paginated page-flip review of the week's entries, using `DiaryPageItem` structs (hardcoded sample data currently).
+5. **AI chat diary** (`DuQChatView`): A chat interface with "度Q" (an island character). `DuQChatViewModel` drives the conversation via `GeminiService`, then generates a diary entry + infers mood once the chat ends. Saved as a `DiaryEntry` with `type = "duqChat"`. Launched from `HomeView` via a separate `@State var showDuQChat: Bool` (not part of `ActiveSheet`).
+
+### Gemini AI Subsystem
+
+| File | Role |
+|------|------|
+| `System/GeminiService.swift` | `actor`; calls Gemini REST API; reads key from `Secrets.plist` (key: `GEMINI_API_KEY`) |
+| `page/DuQChatView.swift` | Chat UI + `DuQChatViewModel` (@Observable @MainActor); manages `ChatPhase` state machine |
+
+`GeminiService` is stateless — create one instance per use site. `Secrets.plist` must exist in the app bundle (not committed); without it the service throws `GeminiError.apiKeyNotConfigured`.
 
 ### HealthKit Subsystem
 
@@ -71,7 +81,8 @@ The Health feature is a self-contained stack:
 
 ### Key Types (Journaling)
 - `JournalQuestion` — SwiftData `@Model`; synced from Firestore; use `.category` computed property (not raw `categoryRawValue`)
-- `DiaryEntry` — SwiftData `@Model`; user-authored entries with mood index (0–4) and text
+- `DiaryEntry` — SwiftData `@Model`; `type` is one of `"daily"` / `"introspection"` / `"freeNote"` / `"duqChat"`; `moodIndex` is `nil` for freeNote entries; has a cascade-delete `mediaItems: [DiaryMedia]` relationship
+- `DiaryMedia` — SwiftData `@Model`; stores photo/video thumbnail `Data`; inverse relationship to `DiaryEntry`
 - `DailyQuestionManager` — `@Observable`; call `initializeDailyQuestions(modelContext:)` from `.task` on `HomeView`
 - `AppLockManager` — `@Observable` singleton; 4-digit PIN (SHA256 in UserDefaults), Face ID/Touch ID, security-question recovery
 - `AppTheme` — enum (`.light`, `.dark`, `.system`); system mode auto-switches dark at 19:00; stored as `Int` via `@AppStorage("appearanceMode")`

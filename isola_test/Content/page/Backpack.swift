@@ -1,6 +1,10 @@
 import SwiftUI
 import SwiftData
 
+private enum DiaryListSortOrder {
+    case byTime, byType
+}
+
 struct Backpack: View {
     @State private var currentMonth: Date = Date()
     @State private var showDatePicker = false
@@ -10,6 +14,9 @@ struct Backpack: View {
     @Query(sort: \DiaryEntry.date, order: .reverse) private var entries: [DiaryEntry]
     @State private var entryToEdit: DiaryEntry?
     @AppStorage("appearanceMode") private var appearanceMode: Int = AppTheme.system.rawValue
+    @State private var selectedCalendarDate: Date? = nil
+    @State private var showAllEntries: Bool = false
+    @State private var sortOrder: DiaryListSortOrder = .byTime
 
     private var currentTheme: AppTheme { AppTheme(rawValue: appearanceMode) ?? .system }
     private var isDark: Bool { currentTheme.colorScheme == .dark }
@@ -22,13 +29,39 @@ struct Backpack: View {
     private let calendar = Calendar.current
     private let columns = Array(repeating: GridItem(.flexible(), spacing: 10), count: 7)
 
+    private var displayedEntries: [DiaryEntry] {
+        let base: [DiaryEntry]
+        if let date = selectedCalendarDate {
+            base = entries.filter { calendar.isDate($0.date, inSameDayAs: date) }
+        } else if showAllEntries {
+            base = Array(entries)
+        } else {
+            base = entries.filter { calendar.isDate($0.date, equalTo: currentMonth, toGranularity: .month) }
+        }
+        switch sortOrder {
+        case .byTime:
+            return base.sorted { $0.date > $1.date }
+        case .byType:
+            return base.sorted { a, b in
+                let ta = typeRank(a.type), tb = typeRank(b.type)
+                return ta == tb ? a.date > b.date : ta < tb
+            }
+        }
+    }
+
+    private func typeRank(_ type: String) -> Int {
+        switch type {
+        case "duqChat": return 0
+        case "daily", "introspection": return 1
+        default: return 2
+        }
+    }
+
 // MARK: - 主視圖
     var body: some View {
         ZStack {
-            // 背景色
             pageBackground
                 .ignoresSafeArea()
-            // 可滑動的頁面
             ScrollView {
                 VStack(spacing: 0) {
                     dynamicYearHeader
@@ -50,12 +83,10 @@ struct Backpack: View {
                 }
             }
         }
-        // 編輯日記的彈出式視窗
         .preferredColorScheme(currentTheme.colorScheme)
         .sheet(item: $entryToEdit) { entry in
             EditDiaryView(entry: entry)
         }
-        // 年月選擇器的彈出式視窗
         .sheet(isPresented: $showDatePicker) {
             MonthYearPickerView(
                 selectedYear: $selectedYear,
@@ -69,69 +100,115 @@ struct Backpack: View {
         }
     }
 
-    // 刪除日記
     func deleteEntry(_ entry: DiaryEntry) {
-            UIImpactFeedbackGenerator(style: .rigid).impactOccurred()
-            withAnimation(.spring(response: 0.15, dampingFraction: 0.75)) {
-                modelContext.delete(entry)
-            }
+        UIImpactFeedbackGenerator(style: .rigid).impactOccurred()
+        withAnimation(.spring(response: 0.15, dampingFraction: 0.75)) {
+            modelContext.delete(entry)
         }
+    }
 }
 
 // MARK: - UI 組件拆分
-// 日記列表
 private extension Backpack {
-    var diarySection: some View {
-            Group {
-                // 如果日記列表為空，顯示空白的提示
-                if entries.isEmpty {
-                    VStack(spacing: 12) {
-                        Image(systemName: "backpack.fill")
-                            .font(.system(size: 60))
-                            .foregroundColor(.gray.opacity(0.4))
-                        Text("背包裡空空的")
-                            .font(.headline)
-                            .foregroundColor(.gray)
-                        Text("去海灘撿個瓶子寫下今天的心情吧！")
-                            .font(.caption)
-                            .foregroundColor(.gray)
-                    }
-                    .frame(maxWidth: .infinity)
-                    .padding(.vertical, 24)
-                } else {
-                    // 如果日記列表不為空，顯示日記列表
-                    LazyVStack(spacing: 12) {
-                        ForEach(entries) { entry in
-                            diaryRow(entry)
-                                .transition(.asymmetric(
-                                    insertion: .move(edge: .bottom).combined(with: .opacity),
-                                    removal: .scale(scale: 0.8, anchor: .center).combined(with: .opacity)
-                                ))
-                        }
-                    }
-                    // 動畫效果
-                    .animation(.spring(response: 0.3, dampingFraction: 0.8, blendDuration: 0), value: entries)
+
+    var diarySectionTitle: String {
+        if let date = selectedCalendarDate {
+            let m = calendar.component(.month, from: date)
+            let d = calendar.component(.day, from: date)
+            return "\(m)/\(d) 的日記"
+        } else if showAllEntries {
+            return "全部日記"
+        } else {
+            return "本月日記"
+        }
+    }
+
+    var diarySectionHeader: some View {
+        HStack {
+            Text(diarySectionTitle)
+                .font(.system(.headline, design: .serif))
+                .foregroundColor(.primary)
+
+            Spacer()
+
+            Button {
+                UIImpactFeedbackGenerator(style: .light).impactOccurred()
+                withAnimation(.spring(response: 0.3, dampingFraction: 0.8)) {
+                    sortOrder = sortOrder == .byTime ? .byType : .byTime
                 }
+            } label: {
+                HStack(spacing: 4) {
+                    Image(systemName: sortOrder == .byTime ? "clock" : "square.stack")
+                        .font(.system(size: 12))
+                    Text(sortOrder == .byTime ? "時間" : "類型")
+                        .font(.system(size: 12))
+                }
+                .foregroundColor(.primary.opacity(0.6))
+                .padding(.horizontal, 10)
+                .padding(.vertical, 5)
+                .background(Capsule().fill(Color.primary.opacity(0.08)))
+            }
+            .buttonStyle(.plain)
+        }
+        .padding(.bottom, 12)
+    }
+
+    var diarySection: some View {
+        VStack(spacing: 0) {
+            diarySectionHeader
+
+            if entries.isEmpty {
+                VStack(spacing: 12) {
+                    Image(systemName: "backpack.fill")
+                        .font(.system(size: 60))
+                        .foregroundColor(.gray.opacity(0.4))
+                    Text("背包裡空空的")
+                        .font(.headline)
+                        .foregroundColor(.gray)
+                    Text("去海灘撿個瓶子寫下今天的心情吧！")
+                        .font(.caption)
+                        .foregroundColor(.gray)
+                }
+                .frame(maxWidth: .infinity)
+                .padding(.vertical, 24)
+            } else if displayedEntries.isEmpty {
+                VStack(spacing: 12) {
+                    Image(systemName: "doc.text")
+                        .font(.system(size: 40))
+                        .foregroundColor(.gray.opacity(0.4))
+                    Text("這天還沒有日記")
+                        .font(.headline)
+                        .foregroundColor(.gray)
+                }
+                .frame(maxWidth: .infinity)
+                .padding(.vertical, 24)
+            } else {
+                LazyVStack(spacing: 12) {
+                    ForEach(displayedEntries) { entry in
+                        diaryRow(entry)
+                            .transition(.asymmetric(
+                                insertion: .move(edge: .bottom).combined(with: .opacity),
+                                removal: .scale(scale: 0.8, anchor: .center).combined(with: .opacity)
+                            ))
+                    }
+                }
+                .animation(.spring(response: 0.3, dampingFraction: 0.8, blendDuration: 0), value: displayedEntries.map { $0.id })
             }
         }
+    }
 
-    // 日記行
     func diaryRow(_ entry: DiaryEntry) -> some View {
         let moodImageName = entry.type == "freeNote"
             ? "浮標"
             : moodImages[max(0, min(4, entry.moodIndex ?? 2))]
-        // 截斷內容
         let truncatedContent = entry.content.count > 10
             ? String(entry.content.prefix(10)) + "..."
             : entry.content
 
         return DiarySwipeRow(
-            // 點擊日記行
             onTap: { entryToEdit = entry },
-            // 刪除日記行
             onDelete: { deleteEntry(entry) }
         ) {
-            // 心情圖片
             HStack(spacing: 16) {
                 Image(moodImageName)
                     .resizable()
@@ -139,7 +216,6 @@ private extension Backpack {
                     .frame(width: 48, height: 48)
                     .background(Circle().fill(Color.white.opacity(0.9)))
 
-                // 日記標題和日期
                 VStack(alignment: .leading, spacing: 6) {
                     HStack(alignment: .lastTextBaseline) {
                         Text(entry.title)
@@ -154,18 +230,17 @@ private extension Backpack {
                             .font(.caption)
                             .foregroundColor(.gray)
                             .layoutPriority(1)
-                    }.padding(.top,15)
+                    }.padding(.top, 15)
                     Text(truncatedContent)
                         .font(.subheadline)
                         .foregroundColor(.gray)
                         .lineLimit(1)
-                }.padding(.bottom,15)
-
+                }.padding(.bottom, 15)
                 .frame(maxWidth: .infinity, alignment: .leading)
             }
         }
     }
-    
+
     var dynamicYearHeader: some View {
         HStack {
             let year = calendar.component(.year, from: currentMonth)
@@ -174,11 +249,11 @@ private extension Backpack {
                 .foregroundColor(.primary)
         }
     }
-    
+
     var systemWeekdays: [String] {
         Calendar.current.veryShortWeekdaySymbols
     }
-    
+
     var weekdayHeader: some View {
         HStack(spacing: 0) {
             ForEach(systemWeekdays, id: \.self) { day in
@@ -192,7 +267,7 @@ private extension Backpack {
         .padding(.horizontal, 16)
         .padding(.bottom, 10)
     }
-    
+
     var monthHeader: some View {
         HStack {
             Button(action: { changeMonth(by: -1) }) {
@@ -212,6 +287,10 @@ private extension Backpack {
                     currentMonth = now
                     selectedYear = calendar.component(.year, from: now)
                     selectedMonth = calendar.component(.month, from: now)
+                    withAnimation(.spring(response: 0.3, dampingFraction: 0.8)) {
+                        selectedCalendarDate = nil
+                        showAllEntries = true
+                    }
                 }
                 .onTapGesture {
                     selectedYear = calendar.component(.year, from: currentMonth)
@@ -229,11 +308,11 @@ private extension Backpack {
         }
         .padding(.horizontal, 40)
     }
-    
+
     var calendarGrid: some View {
         let daysInMonth = daysInMonth(for: currentMonth)
         let firstDayOffset = firstWeekdayOffset(for: currentMonth)
-        
+
         return LazyVGrid(columns: columns, spacing: 25) {
             if firstDayOffset > 0 {
                 ForEach(-firstDayOffset..<0, id: \.self) { _ in
@@ -241,16 +320,17 @@ private extension Backpack {
                         .frame(height: 32)
                 }
             }
-            
+
             ForEach(1...daysInMonth, id: \.self) { day in
                 let date = dateForDay(day, in: currentMonth)
+                let isSelected = selectedCalendarDate.map { calendar.isDate($0, inSameDayAs: date) } ?? false
                 VStack(spacing: 8) {
                     Text("\(day)")
                         .font(.system(size: 16, design: .serif))
-                        .foregroundStyle(.primary)
-                    
+                        .foregroundStyle(isSelected ? Color.orange : .primary)
+
                     Button {
-                        openLatestEntry(for: date)
+                        selectDate(for: date)
                     } label: {
                         Image(moodImageName(for: date))
                             .resizable()
@@ -317,34 +397,29 @@ struct DiarySwipeRow<Content: View>: View {
                 .offset(x: offsetX)
                 .gesture(
                     DragGesture(minimumDistance: 30)
-                            .onChanged { value in
-                                guard abs(value.translation.width) > abs(value.translation.height) else { return }
-                                
-                                isDraggingRow = true
-                                let translation = value.translation.width
-                                
-                                if translation < 0 {
-                                    offsetX = max(-revealWidth, translation)
-                                } else if offsetX < 0 {
-                                    offsetX = min(0, -revealWidth + translation)
-                                }
+                        .onChanged { value in
+                            guard abs(value.translation.width) > abs(value.translation.height) else { return }
+                            isDraggingRow = true
+                            let translation = value.translation.width
+                            if translation < 0 {
+                                offsetX = max(-revealWidth, translation)
+                            } else if offsetX < 0 {
+                                offsetX = min(0, -revealWidth + translation)
                             }
-                            .onEnded { value in
-                                guard isDraggingRow else { return }
-                                
-                                let projected = value.predictedEndTranslation.width
-                                let shouldOpen = value.translation.width < -revealWidth * 0.35 || projected < -revealWidth * 0.7
-                                
-                                withAnimation(.spring(response: 0.22, dampingFraction: 0.9)) {
-                                    offsetX = shouldOpen ? -revealWidth : 0
-                                }
-                                
-                                DispatchQueue.main.asyncAfter(deadline: .now() + 0.05) {
-                                    isDraggingRow = false
-                                }
+                        }
+                        .onEnded { value in
+                            guard isDraggingRow else { return }
+                            let projected = value.predictedEndTranslation.width
+                            let shouldOpen = value.translation.width < -revealWidth * 0.35 || projected < -revealWidth * 0.7
+                            withAnimation(.spring(response: 0.22, dampingFraction: 0.9)) {
+                                offsetX = shouldOpen ? -revealWidth : 0
                             }
-                    )
-                    .animation(.easeOut(duration: 0.16), value: isDeleting)
+                            DispatchQueue.main.asyncAfter(deadline: .now() + 0.05) {
+                                isDraggingRow = false
+                            }
+                        }
+                )
+                .animation(.easeOut(duration: 0.16), value: isDeleting)
         }
         .clipShape(RoundedRectangle(cornerRadius: 16))
     }
@@ -362,13 +437,17 @@ struct DiarySwipeRow<Content: View>: View {
 
 // MARK: - 日曆邏輯運算
 private extension Backpack {
-    
+
     func changeMonth(by value: Int) {
         if let newMonth = calendar.date(byAdding: .month, value: value, to: currentMonth) {
             currentMonth = newMonth
+            withAnimation(.spring(response: 0.3, dampingFraction: 0.8)) {
+                selectedCalendarDate = nil
+                showAllEntries = false
+            }
         }
     }
-    
+
     func monthString(from date: Date) -> String {
         return Self.monthFormatter.string(from: date).uppercased()
     }
@@ -379,12 +458,12 @@ private extension Backpack {
         formatter.locale = Locale(identifier: "en_US")
         return formatter
     }()
-    
+
     func daysInMonth(for date: Date) -> Int {
         guard let range = calendar.range(of: .day, in: .month, for: date) else { return 30 }
         return range.count
     }
-    
+
     func firstWeekdayOffset(for date: Date) -> Int {
         guard let firstOfMonth = calendar.date(from: calendar.dateComponents([.year, .month], from: date)) else { return 0 }
         let weekday = calendar.component(.weekday, from: firstOfMonth)
@@ -420,25 +499,27 @@ private extension Backpack {
         return moodImages[safeMoodIndex]
     }
 
-    func openLatestEntry(for date: Date) {
+    func selectDate(for date: Date) {
         let targetDay = calendar.startOfDay(for: date)
-        let dayEntries = entries
-            .filter { entry in
-                calendar.isDate(entry.date, inSameDayAs: targetDay)
-            }
-            .sorted { $0.date > $1.date }
+        let today = calendar.startOfDay(for: Date())
+        guard targetDay <= today else { return }
+        guard entries.contains(where: { calendar.isDate($0.date, inSameDayAs: targetDay) }) else { return }
 
-        guard let latestEntry = dayEntries.first else { return }
-        entryToEdit = latestEntry
+        UIImpactFeedbackGenerator(style: .light).impactOccurred()
+        withAnimation(.spring(response: 0.3, dampingFraction: 0.8)) {
+            showAllEntries = false
+            selectedCalendarDate = targetDay
+        }
     }
-    
-    // 將選好的年月更新回 currentMonth
+
     func updateCurrentMonth() {
         var components = calendar.dateComponents([.year, .month, .day], from: currentMonth)
         components.year = selectedYear
         components.month = selectedMonth
         if let newDate = calendar.date(from: components) {
             currentMonth = newDate
+            selectedCalendarDate = nil
+            showAllEntries = false
         }
     }
 }
@@ -448,24 +529,22 @@ struct MonthYearPickerView: View {
     @Binding var selectedYear: Int
     @Binding var selectedMonth: Int
     var onConfirm: () -> Void
-    
-    @Environment(\.dismiss) var dismiss // 用於關閉 Sheet
-    
-    // 預設年份範圍
+
+    @Environment(\.dismiss) var dismiss
+
     let years = Array(2026...2099)
     let months = Array(1...12)
-    
+
     var body: some View {
         VStack {
-            // 頂部按鈕列
             HStack {
                 Button("取消") {
                     dismiss()
                 }
                 .foregroundStyle(.gray)
-                
+
                 Spacer()
-                
+
                 Button("確認") {
                     onConfirm()
                     dismiss()
@@ -473,18 +552,15 @@ struct MonthYearPickerView: View {
                 .fontWeight(.bold)
             }
             .padding()
-            
-            // 原生滾輪選擇器
+
             HStack(spacing: 0) {
-                // 年份滾輪
                 Picker("Year", selection: $selectedYear) {
                     ForEach(years, id: \.self) { year in
                         Text("\(String(year))年").tag(year)
                     }
                 }
                 .pickerStyle(.wheel)
-                
-                // 月份滾輪
+
                 Picker("Month", selection: $selectedMonth) {
                     ForEach(months, id: \.self) { month in
                         Text("\(month)月").tag(month)
@@ -492,16 +568,16 @@ struct MonthYearPickerView: View {
                 }
                 .pickerStyle(.wheel)
             }
-            // 使用你的主題色點綴
             .background(Color(hex: "#DADADA").opacity(0.01))
             .clipShape(RoundedRectangle(cornerRadius: 16))
             .padding(.horizontal)
-            
+
             Spacer()
         }
         .padding(.top, 10)
     }
 }
+
 // MARK: - 編輯日記列表
 struct EditDiaryView: View {
     @Environment(\.dismiss) private var dismiss
@@ -599,7 +675,3 @@ extension Color {
 #Preview {
     Backpack()
 }
-
-
-
-

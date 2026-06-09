@@ -6,7 +6,7 @@ struct FullChartView: View {
     let samples: [HealthSample]
     let metric: MetricType
 
-    @State private var selectedSample: HealthSample?
+    @State private var selectedDate: Date?
 
     // 折線圖只顯示過去 24 小時
     private var displaySamples: [HealthSample] {
@@ -14,6 +14,14 @@ struct FullChartView: View {
         let cutoff = Date().addingTimeInterval(-86_400)
         let recent = samples.filter { $0.date >= cutoff }
         return recent.isEmpty ? samples : recent
+    }
+
+    private var selectedSample: HealthSample? {
+        guard let d = selectedDate else { return nil }
+        let pool = metric.chartStyle == .line ? displaySamples : samples
+        return pool.min(by: {
+            abs($0.date.timeIntervalSince(d)) < abs($1.date.timeIntervalSince(d))
+        })
     }
 
     private var avg: Double? {
@@ -61,7 +69,6 @@ struct FullChartView: View {
                 .lineStyle(StrokeStyle(lineWidth: 2.5))
                 .interpolationMethod(.catmullRom)
             }
-            // 選取指示器
             if let sel = selectedSample {
                 RuleMark(x: .value("選取", sel.date))
                     .foregroundStyle(Color.primary.opacity(0.25))
@@ -104,19 +111,7 @@ struct FullChartView: View {
                 AxisValueLabel()
             }
         }
-        .chartOverlay { proxy in
-            GeometryReader { geo in
-                Rectangle()
-                    .fill(.clear)
-                    .contentShape(Rectangle())
-                    .gesture(
-                        DragGesture(minimumDistance: 0)
-                            .onChanged { value in
-                                nearest(to: value.location, in: displaySamples, proxy: proxy, geo: geo)
-                            }
-                    )
-            }
-        }
+        .chartXSelection(value: $selectedDate)
     }
 
     private func selectionTooltip(_ sample: HealthSample, dateFormat: Date.FormatStyle) -> some View {
@@ -133,15 +128,6 @@ struct FullChartView: View {
         .background(Color(.secondarySystemGroupedBackground))
         .clipShape(RoundedRectangle(cornerRadius: 8))
         .shadow(color: .black.opacity(0.12), radius: 3, y: 1)
-    }
-
-    private func nearest(to location: CGPoint, in pool: [HealthSample], proxy: ChartProxy, geo: GeometryProxy) {
-        let origin = geo[proxy.plotAreaFrame].origin
-        let x = location.x - origin.x
-        guard let date: Date = proxy.value(atX: x) else { return }
-        selectedSample = pool.min(by: {
-            abs($0.date.timeIntervalSince(date)) < abs($1.date.timeIntervalSince(date))
-        })
     }
 
     // MARK: 長條圖（含互動）
@@ -183,18 +169,6 @@ struct FullChartView: View {
                 AxisValueLabel()
             }
         }
-        .chartOverlay { proxy in
-            GeometryReader { geo in
-                Rectangle()
-                    .fill(.clear)
-                    .contentShape(Rectangle())
-                    .gesture(
-                        DragGesture(minimumDistance: 0)
-                            .onChanged { value in
-                                nearest(to: value.location, in: samples, proxy: proxy, geo: geo)
-                            }
-                    )
-            }
-        }
+        .chartXSelection(value: $selectedDate)
     }
 }
