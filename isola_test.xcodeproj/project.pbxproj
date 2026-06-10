@@ -11,8 +11,22 @@
 		50A71FC22FCF0F9900BBFF72 /* FirebaseFirestore in Frameworks */ = {isa = PBXBuildFile; productRef = 50A71FC12FCF0F9900BBFF72 /* FirebaseFirestore */; };
 /* End PBXBuildFile section */
 
+/* Begin PBXCopyFilesBuildPhase section */
+		97EF052A2FD843E2008BC178 /* Embed Foundation Extensions */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "";
+			dstSubfolderSpec = 13;
+			files = (
+			);
+			name = "Embed Foundation Extensions";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXCopyFilesBuildPhase section */
+
 /* Begin PBXFileReference section */
 		5064AFF42F7A53B900EE48F4 /* isola_test.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = isola_test.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		97EF05172FD843E1008BC178 /* SwiftUI.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = SwiftUI.framework; path = System/Library/Frameworks/SwiftUI.framework; sourceTree = SDKROOT; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
@@ -71,6 +85,7 @@
 		50A71FC02FCF0F9900BBFF72 /* Frameworks */ = {
 			isa = PBXGroup;
 			children = (
+				97EF05172FD843E1008BC178 /* SwiftUI.framework */,
 			);
 			name = Frameworks;
 			sourceTree = "<group>";
@@ -85,6 +100,7 @@
 				5064AFF02F7A53B900EE48F4 /* Sources */,
 				5064AFF12F7A53B900EE48F4 /* Frameworks */,
 				5064AFF22F7A53B900EE48F4 /* Resources */,
+				97EF052A2FD843E2008BC178 /* Embed Foundation Extensions */,
 			);
 			buildRules = (
 			);
@@ -109,7 +125,7 @@
 			isa = PBXProject;
 			attributes = {
 				BuildIndependentTargetsInParallel = 1;
-				LastSwiftUpdateCheck = 2630;
+				LastSwiftUpdateCheck = 2650;
 				LastUpgradeCheck = 2640;
 				TargetAttributes = {
 					5064AFF32F7A53B900EE48F4 = {
@@ -295,8 +311,10 @@
 				ENABLE_PREVIEWS = YES;
 				ENABLE_USER_SELECTED_FILES = readonly;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_NSCameraUsageDescription = "isola 需要使用相機來拍攝日記照片";
 				INFOPLIST_KEY_NSFaceIDUsageDescription = "isola 使用 Face ID 來解鎖 App";
 				INFOPLIST_KEY_NSHealthShareUsageDescription = " isola 需要讀取你的 Apple Health 健康數據，以計算你的身體狀態評分";
+				INFOPLIST_KEY_NSPhotoLibraryUsageDescription = "isola 需要存取你的相簿來新增日記照片";
 				"INFOPLIST_KEY_UIApplicationSceneManifest_Generation[sdk=iphoneos*]" = YES;
 				"INFOPLIST_KEY_UIApplicationSceneManifest_Generation[sdk=iphonesimulator*]" = YES;
 				"INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents[sdk=iphoneos*]" = YES;
@@ -344,8 +362,10 @@
 				ENABLE_PREVIEWS = YES;
 				ENABLE_USER_SELECTED_FILES = readonly;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_NSCameraUsageDescription = "isola 需要使用相機來拍攝日記照片";
 				INFOPLIST_KEY_NSFaceIDUsageDescription = "isola 使用 Face ID 來解鎖 App";
 				INFOPLIST_KEY_NSHealthShareUsageDescription = " isola 需要讀取你的 Apple Health 健康數據，以計算你的身體狀態評分";
+				INFOPLIST_KEY_NSPhotoLibraryUsageDescription = "isola 需要存取你的相簿來新增日記照片";
 				"INFOPLIST_KEY_UIApplicationSceneManifest_Generation[sdk=iphoneos*]" = YES;
 				"INFOPLIST_KEY_UIApplicationSceneManifest_Generation[sdk=iphonesimulator*]" = YES;
 				"INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents[sdk=iphoneos*]" = YES;

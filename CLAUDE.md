@@ -61,6 +61,8 @@ isola_test/
 
 `GeminiService` is stateless — create one instance per use site. `Secrets.plist` must exist in the app bundle (not committed); without it the service throws `GeminiError.apiKeyNotConfigured`.
 
+`HealthDashboardViewModel` also uses `GeminiService` to generate a short Chinese health tip after each data fetch (`generateAISuggestion()`). The tip is cached in `UserDefaults` using keys `healthAISlot` (a `"yyyy-MM-dd-{morning|afternoon|evening|night}"` string) and `healthAIText`. The cache is reused for the same time-slot; a new Gemini call is made only when the slot changes.
+
 ### HealthKit Subsystem
 
 The Health feature is a self-contained stack:
@@ -87,12 +89,30 @@ The Health feature is a self-contained stack:
 - `AppLockManager` — `@Observable` singleton; 4-digit PIN (SHA256 in UserDefaults), Face ID/Touch ID, security-question recovery
 - `AppTheme` — enum (`.light`, `.dark`, `.system`); system mode auto-switches dark at 19:00; stored as `Int` via `@AppStorage("appearanceMode")`
 - `Accessory` — plain struct in `Clothes.swift`; defines unlockable island accessories with `unlockThreshold` (entry count). `accessoryData` is the global array.
+- `SettingView` — presented as a sheet from `HomeView` (not a tab). Navigates via `NavigationLink` to `NotificationSettingView` and `AppLockSettingView`.
 
 ### Theming
 `HomePageTheme.swift` owns `AppTheme` and `homeNightOverlayOpacity(at:)`. `SeaSceneView` (inside `HomeView.swift`) uses this to blend between day/night background images in a 60fps `Canvas` animation.
 
+Each view individually reads `@AppStorage("appearanceMode")` and computes `isDark` locally — there is no shared theme environment. The `.system` case treats hour ≥ 19 as dark. The two canonical background colours are `Color(hex: "#151D2B")` (dark) and `Color(hex: "#FDFBF0")` (light).
+
 ### App Lock Overlay
 `ContentView` wraps everything in a `ZStack` and overlays `AppLockUnlockView` when `AppLockManager.shared.isLocked == true`. The lock engages on init if a PIN is set.
+
+### Notification System
+
+`System/NotificationManager.swift` — `final class`, `@unchecked Sendable` singleton (`NotificationManager.shared`).
+
+- **Journal reminders**: `scheduleJournalReminders(answeredToday:)` batches 30 calendar-day `UNCalendarNotificationTrigger` requests with IDs `journal_YYYY-MM-DD`. Call this whenever the toggle/time changes and on app launch. Call `cancelTodayJournalReminder()` after the user saves a journal entry.
+- **Sleep notifications**: `sendSleepNotificationIfNeeded()` fires a one-shot notification when sleep data arrives; throttled to once per day via `UserDefaults` key `notif_sleep_last_sent_date`.
+- All notification `@AppStorage` keys are static constants on `NotificationManager` (e.g. `journalEnabledKey`, `journalHourKey`) — bind to them in views to stay in sync.
+- `bottleAnsweredDate` (`@AppStorage`) stores today's date string (`"yyyy-MM-dd"`) to track whether the user has already journaled today; used to skip the journal notification for the current day.
+
+### Widget Extension
+
+`IsolaWidget/` is a separate WidgetKit extension target. `IsolaWidgetBundle` declares `IsolaHealthWidget` as its widget. The extension has HealthKit entitlement. There are no App Groups configured yet, so the widget cannot read the main app's `UserDefaults` or `SwiftData` store — add App Groups to both targets' entitlements before sharing data.
+
+`IsolaWidgetControl.swift` is auto-generated boilerplate (timer toggle placeholder) — not a real feature.
 
 ## Patterns
 

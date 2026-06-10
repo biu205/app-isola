@@ -29,6 +29,17 @@ struct YourApp: App {
 struct ContentView: View {
     @State private var lockManager = AppLockManager.shared
     @State private var healthVM = HealthDashboardViewModel()
+    @AppStorage("bottleAnsweredDate") private var bottleAnsweredDateStr: String = ""
+
+    private static let todayFormatter: DateFormatter = {
+        let f = DateFormatter()
+        f.dateFormat = "yyyy-MM-dd"
+        return f
+    }()
+
+    private var isAnsweredToday: Bool {
+        bottleAnsweredDateStr == Self.todayFormatter.string(from: Date())
+    }
 
     var body: some View {
         ZStack {
@@ -65,6 +76,8 @@ struct ContentView: View {
         .animation(.easeInOut(duration: 0.25), value: lockManager.isLocked)
         .task {
             healthVM.requestAuthorization()
+            await NotificationManager.shared.requestPermission()
+            NotificationManager.shared.scheduleJournalReminders(answeredToday: isAnsweredToday)
         }
     }
 }

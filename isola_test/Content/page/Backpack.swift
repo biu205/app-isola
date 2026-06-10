@@ -235,6 +235,25 @@ private extension Backpack {
                         .font(.subheadline)
                         .foregroundColor(.gray)
                         .lineLimit(1)
+                    if entry.type == "freeNote" && !entry.mediaItems.isEmpty {
+                        HStack(spacing: 6) {
+                            ForEach(Array(entry.mediaItems.prefix(2)), id: \.id) { media in
+                                if let data = media.imageData, let uiImage = UIImage(data: data) {
+                                    Image(uiImage: uiImage)
+                                        .resizable()
+                                        .scaledToFill()
+                                        .frame(width: 42, height: 42)
+                                        .clipShape(RoundedRectangle(cornerRadius: 6))
+                                }
+                            }
+                            if entry.mediaItems.count > 2 {
+                                Text("+\(entry.mediaItems.count - 2)")
+                                    .font(.caption2)
+                                    .foregroundColor(.secondary)
+                            }
+                        }
+                        .padding(.bottom, 2)
+                    }
                 }.padding(.bottom, 15)
                 .frame(maxWidth: .infinity, alignment: .leading)
             }
@@ -581,10 +600,14 @@ struct MonthYearPickerView: View {
 // MARK: - 編輯日記列表
 struct EditDiaryView: View {
     @Environment(\.dismiss) private var dismiss
+    @Environment(\.modelContext) private var modelContext
     @Bindable var entry: DiaryEntry
 
     let moodImages = ["非常不愉快度Ｑ", "不愉快度Ｑ", "度Ｑ", "愉快度Ｑ", "非常愉快度Ｑ"]
     let moodNames = ["非常不愉快", "不愉快", "一般", "愉快", "非常愉快"]
+
+    @State private var showCameraPicker = false
+    @State private var showLibraryPicker = false
 
     var body: some View {
         NavigationStack {
@@ -647,6 +670,54 @@ struct EditDiaryView: View {
                         .font(.body)
                         .lineSpacing(6)
                 }
+
+                if entry.type == "freeNote" {
+                    Section(header: Text("照片")) {
+                        if !entry.mediaItems.isEmpty {
+                            ScrollView(.horizontal, showsIndicators: false) {
+                                HStack(spacing: 10) {
+                                    ForEach(Array(entry.mediaItems.enumerated()), id: \.element.id) { index, media in
+                                        if let data = media.imageData, let uiImage = UIImage(data: data) {
+                                            ZStack(alignment: .topTrailing) {
+                                                Image(uiImage: uiImage)
+                                                    .resizable()
+                                                    .scaledToFill()
+                                                    .frame(width: 100, height: 100)
+                                                    .clipShape(RoundedRectangle(cornerRadius: 10))
+                                                Button {
+                                                    deleteMedia(at: index)
+                                                } label: {
+                                                    Image(systemName: "xmark.circle.fill")
+                                                        .font(.system(size: 20))
+                                                        .foregroundColor(.white)
+                                                        .shadow(radius: 2)
+                                                }
+                                                .padding(4)
+                                            }
+                                        }
+                                    }
+                                }
+                                .padding(.vertical, 8)
+                            }
+                        }
+                        if entry.mediaItems.count < 2 {
+                            Button {
+                                if UIImagePickerController.isSourceTypeAvailable(.camera) {
+                                    showCameraPicker = true
+                                }
+                            } label: {
+                                Label("拍照", systemImage: "camera.fill")
+                                    .foregroundColor(.brown)
+                            }
+                            Button {
+                                showLibraryPicker = true
+                            } label: {
+                                Label("上傳照片", systemImage: "photo.fill")
+                                    .foregroundColor(.brown)
+                            }
+                        }
+                    }
+                }
             }
             .navigationTitle("編輯日記")
             .navigationBarTitleDisplayMode(.inline)
@@ -658,9 +729,47 @@ struct EditDiaryView: View {
                     .fontWeight(.bold)
                 }
             }
+            .fullScreenCover(isPresented: $showCameraPicker) {
+                ImagePicker(image: Binding(
+                    get: { nil },
+                    set: { newImage in
+                        if let image = newImage, entry.mediaItems.count < 2 {
+                            addPhoto(image)
+                        }
+                    }
+                ), sourceType: .camera)
+                .ignoresSafeArea()
+            }
+            .sheet(isPresented: $showLibraryPicker) {
+                ImagePicker(image: Binding(
+                    get: { nil },
+                    set: { newImage in
+                        if let image = newImage, entry.mediaItems.count < 2 {
+                            addPhoto(image)
+                        }
+                    }
+                ), sourceType: .photoLibrary)
+            }
         }
     }
+
+    private func addPhoto(_ image: UIImage) {
+        guard let data = image.jpegData(compressionQuality: 0.8) else { return }
+        let media = DiaryMedia(mediaType: "photo", imageData: data)
+        media.entry = entry
+        modelContext.insert(media)
+        entry.mediaItems.append(media)
+        UIImpactFeedbackGenerator(style: .light).impactOccurred()
+    }
+
+    private func deleteMedia(at index: Int) {
+        guard index < entry.mediaItems.count else { return }
+        let media = entry.mediaItems.remove(at: index)
+        modelContext.delete(media)
+        UIImpactFeedbackGenerator(style: .light).impactOccurred()
+    }
 }
+
 
 // 顏色 Helper
 extension Color {

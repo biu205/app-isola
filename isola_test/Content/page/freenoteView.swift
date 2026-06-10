@@ -14,9 +14,9 @@ struct FreeNoteView: View {
     
     // 照片管理
     @State private var selectedImages: [UIImage] = []
-    @State private var showImagePicker = false
-    @State private var showPhotoPicker = false
-    @State private var cameraSourceType: UIImagePickerController.SourceType = .photoLibrary
+    @State private var showCameraPicker = false
+    @State private var showLibraryPicker = false
+    @State private var showCameraUnavailableAlert = false
     
     var body: some View {
         ZStack {
@@ -130,8 +130,11 @@ struct FreeNoteView: View {
                     HStack(spacing: 12) {
                         // 拍照按鈕
                         Button(action: {
-                            cameraSourceType = .camera
-                            showImagePicker = true
+                            if UIImagePickerController.isSourceTypeAvailable(.camera) {
+                                showCameraPicker = true
+                            } else {
+                                showCameraUnavailableAlert = true
+                            }
                         }) {
                             VStack(spacing: 3) {
                                 Image(systemName: "camera.fill")
@@ -150,7 +153,7 @@ struct FreeNoteView: View {
                         
                         // 上傳照片按鈕
                         Button(action: {
-                            showPhotoPicker = true
+                            showLibraryPicker = true
                         }) {
                             VStack(spacing: 3) {
                                 Image(systemName: "photo.fill")
@@ -188,7 +191,7 @@ struct FreeNoteView: View {
                 .padding(.bottom, 190)
             }
         }
-        .sheet(isPresented: $showImagePicker) {
+        .fullScreenCover(isPresented: $showCameraPicker) {
             ImagePicker(image: Binding(
                 get: { nil },
                 set: { newImage in
@@ -197,10 +200,16 @@ struct FreeNoteView: View {
                         UIImpactFeedbackGenerator(style: .light).impactOccurred()
                     }
                 }
-            ), sourceType: cameraSourceType)
+            ), sourceType: .camera)
+            .ignoresSafeArea()
         }
-        .sheet(isPresented: $showPhotoPicker) {
+        .sheet(isPresented: $showLibraryPicker) {
             PhotoPickerView(selectedImages: $selectedImages)
+        }
+        .alert("無法使用相機", isPresented: $showCameraUnavailableAlert) {
+            Button("確定", role: .cancel) {}
+        } message: {
+            Text("此裝置不支援相機，或相機權限已被拒絕。請至設定 > isola 開啟相機權限。")
         }
     }
     

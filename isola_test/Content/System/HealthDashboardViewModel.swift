@@ -6,10 +6,21 @@ import Observation
 @MainActor
 final class HealthDashboardViewModel {
     private let service = HealthKitService()
+    private let gemini = GeminiService()
 
     var isAuthorized = false
     var isLoading = false
+    var isGeneratingAISuggestion = false
+    var aiSuggestion: String?
     var errorMessage: String?
+
+    private static let aiSlotKey = "healthAISlot"
+    private static let aiTextKey = "healthAIText"
+    private static let aiDateFormatter: DateFormatter = {
+        let f = DateFormatter()
+        f.dateFormat = "yyyy-MM-dd"
+        return f
+    }()
 
     // 7-day display samples
     var hrvSamples: [HealthSample] = []
@@ -162,6 +173,9 @@ final class HealthDashboardViewModel {
                 try await service.requestAuthorization()
                 isAuthorized = true
                 await fetchAllData()
+                service.setupSleepObserver {
+                    NotificationManager.shared.sendSleepNotificationIfNeeded()
+                }
             } catch {
                 errorMessage = error.localizedDescription
             }
@@ -204,6 +218,77 @@ final class HealthDashboardViewModel {
         baselineHRVSamples  = await bHRV  ?? []
         baselineRHRSamples  = await bRHR  ?? []
         baselineTempSamples = await bTemp ?? []
+
+        Task { await generateAISuggestion() }
+    }
+
+    // MARK: - AI Health Suggestion
+
+    private func currentTimeSlot() -> String {
+        let hour = Calendar.current.component(.hour, from: Date())
+        let date = Self.aiDateFormatter.string(from: Date())
+        switch hour {
+        case 0..<6:   return "\(date)-night"
+        case 6..<12:  return "\(date)-morning"
+        case 12..<20: return "\(date)-afternoon"
+        default:      return "\(date)-evening"
+        }
+    }
+
+    func generateAISuggestion() async {
+        guard overallScore.total != nil else { return }
+
+        let slot = currentTimeSlot()
+        let storedSlot = UserDefaults.standard.string(forKey: Self.aiSlotKey) ?? ""
+        let storedText = UserDefaults.standard.string(forKey: Self.aiTextKey) ?? ""
+
+        // 同時段：用快取
+        if slot == storedSlot, !storedText.isEmpty {
+            aiSuggestion = storedText
+            return
+        }
+
+        // 新時段：呼叫 Gemini
+        isGeneratingAISuggestion = true
+        defer { isGeneratingAISuggestion = false }
+
+        let prompt = buildHealthPrompt()
+        let systemPrompt = """
+        你是一個溫暖的健康顧問助理。根據用戶今天的生理數據，給出一句最多 15 字的具體、鼓勵性的繁體中文健康建議。
+        只輸出建議本身，不加任何解釋、前綴、標籤或額外標點。只要兩句話，如果遇到標點則刪除標點並直接幫我換行。
+        """
+
+        do {
+            let text = try await gemini.generateContent(
+                messages: [GeminiAPIMessage(role: "user", text: prompt)],
+                systemPrompt: systemPrompt,
+                maxTokens: 80
+            )
+            aiSuggestion = text
+            UserDefaults.standard.set(slot, forKey: Self.aiSlotKey)
+            UserDefaults.standard.set(text, forKey: Self.aiTextKey)
+        } catch {
+            if !storedText.isEmpty { aiSuggestion = storedText }
+            print("[HealthAI] 建議生成失敗：\(error.localizedDescription)")
+        }
+    }
+
+    private func buildHealthPrompt() -> String {
+        let overall = overallScore
+        var lines: [String] = []
+        if let total = overall.total {
+            lines.append("整體健康分數：\(Int(total.rounded()))分（\(overall.grade?.label ?? "")）")
+        }
+        for cat in categoryScores {
+            let s = cat.score.map { "\(Int($0.rounded()))分" } ?? "無資料"
+            lines.append("\(cat.type.displayName)：\(s)")
+        }
+        if let v = currentHRV           { lines.append("HRV：\(Int(v)) ms") }
+        if let v = currentRHR           { lines.append("靜息心率：\(Int(v)) bpm") }
+        if let v = currentSpo2          { lines.append("血氧：\(String(format: "%.1f", v))%") }
+        if let v = latestSleep?.totalHours { lines.append("昨晚睡眠：\(String(format: "%.1f", v)) 小時") }
+        if let v = todaySteps           { lines.append("今日步數：\(Int(v)) 步") }
+        return lines.joined(separator: "\n")
     }
 
     private func fetchBestTemperature(days: Int) async throws -> [HealthSample] {

@@ -129,7 +129,22 @@ struct SettingView: View {
                                     .frame(height: 60)
                                 }
                             }
-                            StaticRow(title: "通知設定", isDark: isDark)
+                            // --- 通知設定 ---
+                            VStack(spacing: 0) {
+                                Divider()
+                                NavigationLink(destination: NotificationSettingView()) {
+                                    HStack {
+                                        Text("通知設定")
+                                            .foregroundColor(textColor)
+                                        Spacer()
+                                        Image(systemName: "chevron.right")
+                                            .font(.caption)
+                                            .foregroundColor(.gray)
+                                    }
+                                    .padding()
+                                    .frame(height: 60)
+                                }
+                            }
 
                             // App鎖 (NavigationLink)
                             VStack(spacing: 0) {

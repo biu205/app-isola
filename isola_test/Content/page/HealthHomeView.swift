@@ -57,11 +57,21 @@ struct HealthHomeView: View {
                 }
             }
 
-            Text(overall.feedbackText)
-                .font(.title3)
-                .foregroundStyle(.secondary)
-                .multilineTextAlignment(.center)
-                .padding(.horizontal, 24)
+            if vm.isGeneratingAISuggestion {
+                HStack(spacing: 6) {
+                    ProgressView().scaleEffect(0.75)
+                    Text("分析中…")
+                        .font(.subheadline)
+                        .foregroundStyle(.secondary)
+                }
+            } else {
+                Text(vm.aiSuggestion ?? overall.feedbackText)
+                    .font(.title3)
+                    .foregroundStyle(.secondary)
+                    .multilineTextAlignment(.center)
+                    .padding(.horizontal, 24)
+                    .transition(.opacity)
+            }
             
             Spacer()
         }

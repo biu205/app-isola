@@ -51,6 +51,7 @@ struct HomeView: View {
 
     private func markBottlesAnswered() {
         bottleAnsweredDateStr = todayDateString
+        NotificationManager.shared.cancelTodayJournalReminder()
         withAnimation(.easeOut(duration: 1.5)) {
             bottleOpacity = 0.0
         }
@@ -267,6 +268,7 @@ struct HomeView: View {
                 }
                 }
             .onAppear {
+                // bottleAnsweredDateStr = "" // TEMP: 測試用，測試完刪掉
                 bottleOpacity = (bottleAnsweredDateStr == todayDateString) ? 0.0 : 1.0
             }
             .onReceive(Timer.publish(every: 60, on: .main, in: .common).autoconnect()) { _ in

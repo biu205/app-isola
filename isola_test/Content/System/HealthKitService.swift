@@ -165,6 +165,45 @@ final class HealthKitService {
         let start = Calendar.current.date(byAdding: .day, value: -days, to: Date()) ?? Date()
         return HKQuery.predicateForSamples(withStart: start, end: Date())
     }
+
+    // MARK: - Sleep Observer (for notifications)
+
+    /// 設定睡眠資料監聽；有新資料時呼叫 onNewData
+    func setupSleepObserver(onNewData: @escaping @Sendable () -> Void) {
+        let sleepType = HKCategoryType(.sleepAnalysis)
+        let query = HKObserverQuery(sampleType: sleepType, predicate: nil) { [weak self] _, completionHandler, error in
+            defer { completionHandler() }
+            guard error == nil, let self else { return }
+            Task {
+                if await self.hasRecentSleepData() {
+                    onNewData()
+                }
+            }
+        }
+        store.execute(query)
+        store.enableBackgroundDelivery(for: sleepType, frequency: .immediate) { success, _ in
+            if !success { print("[HealthKit] 睡眠背景傳遞未能啟用，請確認已開啟 Background Delivery 能力") }
+        }
+    }
+
+    /// 檢查過去 16 小時是否有睡眠資料
+    func hasRecentSleepData() async -> Bool {
+        let sleepType = HKCategoryType(.sleepAnalysis)
+        let start = Date().addingTimeInterval(-16 * 3600)
+        let predicate = HKQuery.predicateForSamples(withStart: start, end: Date())
+
+        return await withCheckedContinuation { continuation in
+            let query = HKSampleQuery(
+                sampleType: sleepType,
+                predicate: predicate,
+                limit: 1,
+                sortDescriptors: nil
+            ) { _, samples, _ in
+                continuation.resume(returning: !(samples ?? []).isEmpty)
+            }
+            self.store.execute(query)
+        }
+    }
 }
 
 enum HealthError: LocalizedError {
