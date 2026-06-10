@@ -274,7 +274,7 @@ struct QuestionView: View {
                     .frame(maxWidth: 250, maxHeight: .infinity)
                     .foregroundColor(.black.opacity(0.8))
             }
-            .frame(height: 200)
+            .frame(height: 280)
             
             Button(action: saveAndClose) {
                 Text("封入瓶子")
