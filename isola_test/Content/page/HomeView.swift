@@ -268,15 +268,15 @@ struct HomeView: View {
                 }
                 }
             .onAppear {
-                // bottleAnsweredDateStr = "" // TEMP: 測試用，測試完刪掉
                 bottleOpacity = (bottleAnsweredDateStr == todayDateString) ? 0.0 : 1.0
             }
             .onReceive(Timer.publish(every: 60, on: .main, in: .common).autoconnect()) { _ in
-                // 新的一天到來時恢復瓶子
-                if bottleAnsweredDateStr != todayDateString, bottleOpacity < 1.0 {
-                    withAnimation(.easeIn(duration: 1.0)) {
-                        bottleOpacity = 1.0
+                // 新的一天到來時恢復瓶子，並重新抽取題目
+                if bottleAnsweredDateStr != todayDateString {
+                    if bottleOpacity < 1.0 {
+                        withAnimation(.easeIn(duration: 1.0)) { bottleOpacity = 1.0 }
                     }
+                    questionManager.refreshQuestionsForNewDay(modelContext: modelContext)
                 }
             }
             .onChange(of: activeSheet) { _, newValue in

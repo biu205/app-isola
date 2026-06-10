@@ -173,11 +173,18 @@ final class DailyQuestionManager {
     /// 智慧權重隨機
     private func pickSmartRandom(from questions: [JournalQuestion]) -> JournalQuestion? {
         guard !questions.isEmpty else { return nil }
-        // 依據時間升序排序
+        // 依據時間升序排序（最久沒出現的排前面）
         let sorted = questions.sorted {
             ($0.lastSelectedDate ?? Date.distantPast) < ($1.lastSelectedDate ?? Date.distantPast)
         }
-        let poolSize = max(1, Int(Double(sorted.count) * 0.4))
+        // 至少保留 2 題候選，避免只有 1 題時永遠固定
+        let poolSize = max(2, Int(Double(sorted.count) * 0.4))
         return Array(sorted.prefix(poolSize)).randomElement()
+    }
+
+    /// 跨日時呼叫（例如首頁 Timer 偵測到新的一天）
+    @MainActor
+    func refreshQuestionsForNewDay(modelContext: ModelContext) {
+        loadOrRefreshDailyQuestions(modelContext: modelContext)
     }
 }

@@ -9,10 +9,8 @@ final class NotificationManager: @unchecked Sendable {
 
     // MARK: - Keys
     static let journalEnabledKey  = "notif_journal_enabled"
-    static let sleepEnabledKey    = "notif_sleep_enabled"
     static let journalHourKey     = "notif_journal_hour"
     static let journalMinuteKey   = "notif_journal_minute"
-    private let sleepLastSentKey  = "notif_sleep_last_sent_date"
 
     private static let dateFormatter: DateFormatter = {
         let f = DateFormatter()
@@ -95,28 +93,4 @@ final class NotificationManager: @unchecked Sendable {
         center.removePendingNotificationRequests(withIdentifiers: ["journal_\(today)"])
     }
 
-    // MARK: - Sleep Notification
-
-    /// 偵測到睡眠資料時呼叫；同一天只發一次
-    func sendSleepNotificationIfNeeded() {
-        guard UserDefaults.standard.bool(forKey: Self.sleepEnabledKey) else { return }
-
-        let todayStr = Self.dateFormatter.string(from: Date())
-        let lastSentStr = UserDefaults.standard.string(forKey: sleepLastSentKey) ?? ""
-        guard lastSentStr != todayStr else { return }
-
-        let content = UNMutableNotificationContent()
-        content.title = "isola"
-        content.body = "昨晚的睡眠資料已更新，來看看你的睡眠品質吧！"
-        content.sound = .default
-
-        let trigger = UNTimeIntervalNotificationTrigger(timeInterval: 1, repeats: false)
-        let request = UNNotificationRequest(
-            identifier: "sleep_quality_\(todayStr)",
-            content: content,
-            trigger: trigger
-        )
-        center.add(request)
-        UserDefaults.standard.set(todayStr, forKey: sleepLastSentKey)
-    }
 }

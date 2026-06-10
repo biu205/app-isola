@@ -1,5 +1,6 @@
 # Secrets — never commit real keys
 isola_test/Secrets.plist
+isola_test/GoogleService-Info.plist
 
 # Xcode
 *.xcuserstate

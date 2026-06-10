@@ -3,7 +3,6 @@ import SwiftUI
 struct NotificationSettingView: View {
     @AppStorage("appearanceMode") private var appearanceMode: Int = 0
     @AppStorage(NotificationManager.journalEnabledKey) private var journalEnabled = false
-    @AppStorage(NotificationManager.sleepEnabledKey)   private var sleepEnabled   = false
     @AppStorage(NotificationManager.journalHourKey)    private var journalHour    = 20
     @AppStorage(NotificationManager.journalMinuteKey)  private var journalMinute  = 0
     @AppStorage("bottleAnsweredDate") private var bottleAnsweredDateStr = ""
@@ -80,28 +79,6 @@ struct NotificationSettingView: View {
                     }
                     .padding(.horizontal)
 
-                    // MARK: 睡眠提醒
-                    sectionHeader("睡眠提醒")
-
-                    VStack(spacing: 0) {
-                        Divider()
-
-                        row {
-                            VStack(alignment: .leading, spacing: 2) {
-                                Text("睡眠品質提醒")
-                                    .foregroundColor(textColor)
-                                Text("偵測到睡眠資料時自動通知")
-                                    .font(.caption)
-                                    .foregroundColor(.gray)
-                            }
-                            Spacer()
-                            Toggle("", isOn: $sleepEnabled)
-                                .tint(.brown)
-                        }
-
-                        Divider()
-                    }
-                    .padding(.horizontal)
                 }
                 .padding(.top, 8)
             }

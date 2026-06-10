@@ -233,10 +233,11 @@ struct FreeNoteView: View {
         )
         
         modelContext.insert(newEntry)
-        
+        try? modelContext.save()
+
         let generator = UINotificationFeedbackGenerator()
         generator.notificationOccurred(.success)
-        
+
         withAnimation(.interpolatingSpring(stiffness: 170, damping: 15)) {
             activeSheet = nil
         }
@@ -244,5 +245,5 @@ struct FreeNoteView: View {
 }
 
 #Preview {
-    HomeView()
+    FreeNoteView(activeSheet: .constant(.freeNote))
 }

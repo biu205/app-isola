@@ -181,28 +181,3 @@ struct SettingView: View {
 }
 
 
-// 靜態行組件
-struct StaticRow: View {
-    var title: String
-    var isDark: Bool
-
-    private var textColor: Color {
-        isDark ? .white : .black
-    }
-
-    var body: some View {
-        VStack(spacing: 0) {
-            Divider()
-            HStack {
-                Text(title)
-                Spacer()
-                Image(systemName: "chevron.right")
-                    .font(.caption)
-                    .foregroundColor(.gray)
-            }
-            .padding()
-            .frame(height: 60)
-            .foregroundColor(textColor)
-        }
-    }
-}

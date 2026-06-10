@@ -16,6 +16,12 @@ final class HealthDashboardViewModel {
 
     private static let aiSlotKey = "healthAISlot"
     private static let aiTextKey = "healthAIText"
+    static let aiConsentKey = "healthAIConsent"
+
+    var aiHealthConsentGiven: Bool {
+        get { UserDefaults.standard.bool(forKey: Self.aiConsentKey) }
+        set { UserDefaults.standard.set(newValue, forKey: Self.aiConsentKey) }
+    }
     private static let aiDateFormatter: DateFormatter = {
         let f = DateFormatter()
         f.dateFormat = "yyyy-MM-dd"
@@ -34,6 +40,7 @@ final class HealthDashboardViewModel {
 
     // 28-day baseline samples (for z-score)
     var baselineHRVSamples: [HealthSample] = []
+    var baselineHRSamples: [HealthSample] = []
     var baselineRHRSamples: [HealthSample] = []
     var baselineTempSamples: [HealthSample] = []
 
@@ -46,9 +53,9 @@ final class HealthDashboardViewModel {
         return baselineTempSamples.map(\.value).reduce(0, +) / Double(baselineTempSamples.count)
     }
 
-    // RR baseline derived from HR samples (28-day HR → RR)
+    // RR baseline derived from 28-day HR samples (bpm → ms)
     var rrBaseline: Baseline? {
-        let rrSamples = baselineHRVSamples.map { s in
+        let rrSamples = baselineHRSamples.map { s in
             HealthSample(date: s.date, value: 60_000 / max(s.value, 1))
         }
         return HealthScoringEngine.makeBaseline(from: rrSamples)
@@ -173,9 +180,6 @@ final class HealthDashboardViewModel {
                 try await service.requestAuthorization()
                 isAuthorized = true
                 await fetchAllData()
-                service.setupSleepObserver {
-                    NotificationManager.shared.sendSleepNotificationIfNeeded()
-                }
             } catch {
                 errorMessage = error.localizedDescription
             }
@@ -203,6 +207,7 @@ final class HealthDashboardViewModel {
 
         // 28-day baseline data
         async let bHRV  = try? service.fetchSamples(type: .heartRateVariabilitySDNN, unit: msUnit, days: 28)
+        async let bHR   = try? service.fetchSamples(type: .heartRate, unit: bpmUnit, days: 28)
         async let bRHR  = try? service.fetchSamples(type: .restingHeartRate, unit: bpmUnit, days: 28)
         async let bTemp = try? fetchBestTemperature(days: 28)
 
@@ -216,6 +221,7 @@ final class HealthDashboardViewModel {
         sleepSessions      = await sleep ?? []
 
         baselineHRVSamples  = await bHRV  ?? []
+        baselineHRSamples   = await bHR   ?? []
         baselineRHRSamples  = await bRHR  ?? []
         baselineTempSamples = await bTemp ?? []
 
@@ -236,6 +242,7 @@ final class HealthDashboardViewModel {
     }
 
     func generateAISuggestion() async {
+        guard aiHealthConsentGiven else { return }
         guard overallScore.total != nil else { return }
 
         let slot = currentTimeSlot()

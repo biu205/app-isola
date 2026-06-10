@@ -313,7 +313,8 @@ struct QuestionView: View {
         )
         
         modelContext.insert(newEntry)
-        
+        try? modelContext.save()
+
         let generator = UINotificationFeedbackGenerator()
         generator.notificationOccurred(.success)
 
@@ -401,5 +402,8 @@ struct PhotoPickerView: UIViewControllerRepresentable {
 }
 
 #Preview {
-    HomeView()
+    QuestionView(
+        activeSheet: .constant(.question),
+        question: JournalQuestion(id: "preview", text: "今天發生了什麼有趣的事？", requireImage: false, category: .daily)
+    )
 }

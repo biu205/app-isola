@@ -49,7 +49,6 @@ actor GeminiService {
         systemPrompt: String,
         maxTokens: Int = 500
     ) async throws -> String {
-        print("[Gemini] apiKey loaded: \(GeminiService.apiKey.prefix(10))...")
         guard GeminiService.apiKey != "YOUR_GEMINI_API_KEY" else {
             throw GeminiError.apiKeyNotConfigured
         }

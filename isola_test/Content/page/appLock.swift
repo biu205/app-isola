@@ -8,6 +8,7 @@
 import SwiftUI
 import LocalAuthentication
 import CryptoKit
+import Security
 
 // MARK: - Manager
 
@@ -17,31 +18,46 @@ class AppLockManager {
 
     var isLocked: Bool = false
 
+    // Cached so body doesn't call LAContext on every render
+    private(set) var cachedBiometricType: LABiometryType = .none
+
     var isPinSet: Bool {
         UserDefaults.standard.bool(forKey: "appLock_enabled")
     }
     var isBiometricEnabled: Bool {
         UserDefaults.standard.bool(forKey: "appLock_biometric")
     }
-    var availableBiometricType: LABiometryType {
-        let ctx = LAContext()
-        var err: NSError?
-        guard ctx.canEvaluatePolicy(.deviceOwnerAuthenticationWithBiometrics, error: &err) else { return .none }
-        return ctx.biometryType
-    }
+    var availableBiometricType: LABiometryType { cachedBiometricType }
 
     private init() {
         isLocked = isPinSet
+        let ctx = LAContext()
+        var err: NSError?
+        if ctx.canEvaluatePolicy(.deviceOwnerAuthenticationWithBiometrics, error: &err) {
+            cachedBiometricType = ctx.biometryType
+        }
     }
 
     func setupPin(_ pin: String) {
-        UserDefaults.standard.set(hash(pin), forKey: "appLock_pinHash")
+        keychainSave(saltedHash(pin), forKey: "appLock_pinHash")
         UserDefaults.standard.set(true, forKey: "appLock_enabled")
     }
 
     func verifyPin(_ pin: String) -> Bool {
-        let stored = UserDefaults.standard.string(forKey: "appLock_pinHash") ?? ""
-        return hash(pin) == stored
+        if let keychainHash = keychainLoad(forKey: "appLock_pinHash") {
+            return saltedHash(pin) == keychainHash
+        }
+        // Migrate legacy unsalted UserDefaults hash on first successful verify
+        if let legacyHash = UserDefaults.standard.string(forKey: "appLock_pinHash") {
+            let unsalted = unsaltedHash(pin)
+            if unsalted == legacyHash {
+                keychainSave(saltedHash(pin), forKey: "appLock_pinHash")
+                UserDefaults.standard.removeObject(forKey: "appLock_pinHash")
+                return true
+            }
+            return false
+        }
+        return false
     }
 
     func enableBiometric(_ enabled: Bool) {
@@ -50,12 +66,24 @@ class AppLockManager {
 
     func setupSecurityQuestion(index: Int, answer: String) {
         UserDefaults.standard.set(index, forKey: "appLock_questionIndex")
-        UserDefaults.standard.set(hash(normalize(answer)), forKey: "appLock_answerHash")
+        keychainSave(saltedHash(normalize(answer)), forKey: "appLock_answerHash")
     }
 
     func verifySecurityAnswer(_ answer: String) -> Bool {
-        let stored = UserDefaults.standard.string(forKey: "appLock_answerHash") ?? ""
-        return hash(normalize(answer)) == stored
+        if let keychainHash = keychainLoad(forKey: "appLock_answerHash") {
+            return saltedHash(normalize(answer)) == keychainHash
+        }
+        // Migrate legacy
+        if let legacyHash = UserDefaults.standard.string(forKey: "appLock_answerHash") {
+            let unsalted = unsaltedHash(normalize(answer))
+            if unsalted == legacyHash {
+                keychainSave(saltedHash(normalize(answer)), forKey: "appLock_answerHash")
+                UserDefaults.standard.removeObject(forKey: "appLock_answerHash")
+                return true
+            }
+            return false
+        }
+        return false
     }
 
     var securityQuestion: String? {
@@ -66,10 +94,11 @@ class AppLockManager {
     }
 
     func disableLock() {
-        ["appLock_enabled", "appLock_pinHash", "appLock_biometric",
-         "appLock_questionIndex", "appLock_answerHash"].forEach {
+        ["appLock_enabled", "appLock_biometric", "appLock_questionIndex"].forEach {
             UserDefaults.standard.removeObject(forKey: $0)
         }
+        keychainDelete(forKey: "appLock_pinHash")
+        keychainDelete(forKey: "appLock_answerHash")
         isLocked = false
     }
 
@@ -81,7 +110,7 @@ class AppLockManager {
         var err: NSError?
         guard ctx.canEvaluatePolicy(.deviceOwnerAuthenticationWithBiometrics, error: &err) else { return false }
         do {
-            return try await ctx.evaluatePolicy(.deviceOwnerAuthenticationWithBiometrics,localizedReason: "解鎖 isola")
+            return try await ctx.evaluatePolicy(.deviceOwnerAuthenticationWithBiometrics, localizedReason: "解鎖 isola")
         } catch { return false }
     }
 
@@ -93,12 +122,69 @@ class AppLockManager {
         "你的出生城市是哪裡？"
     ]
 
-    private func hash(_ input: String) -> String {
+    // MARK: - Hashing (salted SHA-256)
+
+    private var installSalt: String {
+        if let existing = keychainLoad(forKey: "appLock_salt") { return existing }
+        var bytes = [UInt8](repeating: 0, count: 32)
+        SecRandomCopyBytes(kSecRandomDefault, bytes.count, &bytes)
+        let salt = bytes.map { String(format: "%02x", $0) }.joined()
+        keychainSave(salt, forKey: "appLock_salt")
+        return salt
+    }
+
+    private func saltedHash(_ input: String) -> String {
+        SHA256.hash(data: Data((installSalt + input).utf8))
+            .compactMap { String(format: "%02x", $0) }.joined()
+    }
+
+    private func unsaltedHash(_ input: String) -> String {
         SHA256.hash(data: Data(input.utf8))
             .compactMap { String(format: "%02x", $0) }.joined()
     }
+
     private func normalize(_ s: String) -> String {
         s.lowercased().trimmingCharacters(in: .whitespaces)
+    }
+
+    // MARK: - Keychain helpers
+
+    private let keychainService = "isola.applock"
+
+    private func keychainSave(_ value: String, forKey account: String) {
+        let data = Data(value.utf8)
+        var query: [CFString: Any] = [
+            kSecClass: kSecClassGenericPassword,
+            kSecAttrService: keychainService,
+            kSecAttrAccount: account,
+            kSecAttrAccessible: kSecAttrAccessibleWhenUnlockedThisDeviceOnly
+        ]
+        SecItemDelete(query as CFDictionary)
+        query[kSecValueData] = data
+        SecItemAdd(query as CFDictionary, nil)
+    }
+
+    private func keychainLoad(forKey account: String) -> String? {
+        let query: [CFString: Any] = [
+            kSecClass: kSecClassGenericPassword,
+            kSecAttrService: keychainService,
+            kSecAttrAccount: account,
+            kSecReturnData: true,
+            kSecMatchLimit: kSecMatchLimitOne
+        ]
+        var result: AnyObject?
+        guard SecItemCopyMatching(query as CFDictionary, &result) == errSecSuccess,
+              let data = result as? Data else { return nil }
+        return String(data: data, encoding: .utf8)
+    }
+
+    private func keychainDelete(forKey account: String) {
+        let query: [CFString: Any] = [
+            kSecClass: kSecClassGenericPassword,
+            kSecAttrService: keychainService,
+            kSecAttrAccount: account
+        ]
+        SecItemDelete(query as CFDictionary)
     }
 }
 
@@ -467,7 +553,10 @@ struct AppLockSetupView: View {
                             step = .enterPin; verifyOldPin = ""
                         } else {
                             withAnimation { wrongOldPin = true }
-                            DispatchQueue.main.asyncAfter(deadline: .now() + 0.4) { verifyOldPin = "" }
+                            Task { @MainActor in
+                                try? await Task.sleep(for: .milliseconds(400))
+                                verifyOldPin = ""
+                            }
                         }
                     }
                 },
@@ -491,7 +580,10 @@ struct AppLockSetupView: View {
                     guard firstPin.count < 4 else { return }
                     firstPin += digit
                     if firstPin.count == 4 {
-                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.15) { step = .confirmPin }
+                        Task { @MainActor in
+                            try? await Task.sleep(for: .milliseconds(150))
+                            step = .confirmPin
+                        }
                     }
                 },
                 onDelete: { if !firstPin.isEmpty { firstPin.removeLast() } }
@@ -518,12 +610,14 @@ struct AppLockSetupView: View {
                     if confirmPin.count == 4 {
                         if confirmPin == firstPin {
                             manager.setupPin(confirmPin)
-                            DispatchQueue.main.asyncAfter(deadline: .now() + 0.15) {
+                            Task { @MainActor in
+                                try? await Task.sleep(for: .milliseconds(150))
                                 step = manager.availableBiometricType != .none ? .biometric : .securityQuestion
                             }
                         } else {
                             withAnimation { mismatch = true }
-                            DispatchQueue.main.asyncAfter(deadline: .now() + 0.4) {
+                            Task { @MainActor in
+                                try? await Task.sleep(for: .milliseconds(400))
                                 confirmPin = ""; firstPin = ""; step = .enterPin
                             }
                         }
@@ -699,7 +793,8 @@ struct AppLockUnlockView: View {
                                 manager.unlock()
                             } else {
                                 withAnimation { shake = true }
-                                DispatchQueue.main.asyncAfter(deadline: .now() + 0.35) {
+                                Task { @MainActor in
+                                    try? await Task.sleep(for: .milliseconds(350))
                                     shake = false; pin = ""
                                 }
                             }

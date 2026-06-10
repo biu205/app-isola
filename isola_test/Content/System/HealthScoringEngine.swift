@@ -30,10 +30,10 @@ struct HealthScoringEngine {
 
     static func scoreRHR(_ rhr: Double) -> Double {
         switch rhr {
-        case 55...75:  return 100
-        case 76...85:  return 85
-        case 86...95:  return 65
-        case 96...100: return 40
+        case 55..<76:  return 100
+        case 76..<86:  return 85
+        case 86..<96:  return 65
+        case 96..<101: return 40
         case 45..<55:  return 75
         default:       return rhr > 100 ? 20 : 50
         }
@@ -86,10 +86,10 @@ struct HealthScoringEngine {
 
     static func scoreTempDelta(_ delta: Double) -> Double {
         switch abs(delta) {
-        case ...0.3:        return 100
-        case 0.3...0.5:     return 85
-        case 0.5...0.8:     return 65
-        case 0.8...1.0:     return 40
+        case ..<0.3:        return 100
+        case 0.3..<0.5:     return 85
+        case 0.5..<0.8:     return 65
+        case 0.8..<1.0:     return 40
         default:            return 20
         }
     }

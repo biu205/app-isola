@@ -29,8 +29,6 @@ final class JournalQuestion {
     
     /// 紀錄這題上次被選中的時間（用於每天隨機抽題的邏輯，避免短期重複）
     var lastSelectedDate: Date?
-    
-    var placeholder: String?
 
     /// 計算屬性：讓 Swift 程式碼可以用強型別安全操作
     var category: QuestionCategory {

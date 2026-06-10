@@ -3,6 +3,7 @@ import SwiftUI
 struct HealthHomeView: View {
     @Environment(HealthDashboardViewModel.self) private var vm
     @AppStorage("appearanceMode") private var appearanceMode: Int = AppTheme.system.rawValue
+    @State private var showAIConsentSheet = false
     private var currentTheme: AppTheme { AppTheme(rawValue: appearanceMode) ?? .system }
     private var isDark: Bool { currentTheme.colorScheme == .dark }
     private var pageBackground: Color { isDark ? Color(hex: "#151D2B") : Color(hex: "#FDFBF0") }
@@ -11,6 +12,9 @@ struct HealthHomeView: View {
         NavigationStack {
             ScrollView {
                 VStack(spacing: 20) {
+                    if !vm.aiHealthConsentGiven {
+                        aiConsentBanner
+                    }
                     overallSection
                     categorySection
                 }
@@ -26,6 +30,73 @@ struct HealthHomeView: View {
         }
         .background(pageBackground.ignoresSafeArea())
         .preferredColorScheme(currentTheme.colorScheme)
+        .sheet(isPresented: $showAIConsentSheet) {
+            aiConsentSheet
+        }
+    }
+
+    private var aiConsentBanner: some View {
+        Button {
+            showAIConsentSheet = true
+        } label: {
+            HStack(spacing: 10) {
+                Image(systemName: "brain.head.profile")
+                    .foregroundColor(.accentColor)
+                VStack(alignment: .leading, spacing: 2) {
+                    Text("啟用 AI 健康建議")
+                        .font(.subheadline.bold())
+                    Text("允許將健康數據傳送給 Google Gemini 以生成建議")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
+                Spacer()
+                Image(systemName: "chevron.right")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+            }
+            .padding(14)
+            .background(.regularMaterial)
+            .clipShape(RoundedRectangle(cornerRadius: 14))
+        }
+        .buttonStyle(.plain)
+    }
+
+    private var aiConsentSheet: some View {
+        VStack(spacing: 24) {
+            Spacer()
+            Image(systemName: "brain.head.profile")
+                .font(.system(size: 56))
+                .foregroundColor(.accentColor)
+            VStack(spacing: 10) {
+                Text("AI 健康建議")
+                    .font(.title2.bold())
+                Text("isola 會將以下資訊傳送給 Google Gemini 以生成個人化建議：\n\n• 整體健康分數\n• HRV、靜息心率、血氧\n• 睡眠時數、今日步數\n\n這些資料不會儲存於 Google 的伺服器。")
+                    .font(.subheadline)
+                    .foregroundStyle(.secondary)
+                    .multilineTextAlignment(.center)
+                    .padding(.horizontal, 24)
+            }
+            Spacer()
+            VStack(spacing: 12) {
+                Button {
+                    vm.aiHealthConsentGiven = true
+                    showAIConsentSheet = false
+                    Task { await vm.generateAISuggestion() }
+                } label: {
+                    Text("允許並啟用")
+                        .font(.body.bold())
+                        .foregroundColor(.white)
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, 16)
+                        .background(Capsule().fill(Color.accentColor))
+                }
+                Button("不啟用") { showAIConsentSheet = false }
+                    .font(.subheadline)
+                    .foregroundStyle(.secondary)
+            }
+            .padding(.horizontal, 40)
+            .padding(.bottom, 40)
+        }
     }
 
 

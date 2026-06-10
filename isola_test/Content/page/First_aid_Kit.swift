@@ -55,7 +55,3 @@ struct MoodReportView: View {
 #Preview {
     MoodReportView()
 }
-
-#Preview {
-    HomeView()
-}

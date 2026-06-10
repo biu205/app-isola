@@ -22,7 +22,7 @@ struct YourApp: App {
         ContentView()
       }
     }
-    .modelContainer(for: [DiaryEntry.self, JournalQuestion.self])
+    .modelContainer(for: [DiaryEntry.self, JournalQuestion.self, DiaryMedia.self])
   }
 }
 
@@ -63,7 +63,7 @@ struct ContentView: View {
                 MoodReportView()
                     .tabItem {
                         Image("Month_Report")
-                        Text("月報")
+                        Text("週報")
                     }
             }
             .accentColor(Color.brown)

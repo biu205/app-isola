@@ -202,7 +202,8 @@ struct IntrospectionView: View {
         )
         
         modelContext.insert(newEntry)
-        
+        try? modelContext.save()
+
         let generator = UINotificationFeedbackGenerator()
         generator.notificationOccurred(.success)
 
@@ -215,5 +216,8 @@ struct IntrospectionView: View {
 }
 
 #Preview {
-    HomeView()
+    IntrospectionView(
+        activeSheet: .constant(.introspection),
+        question: JournalQuestion(id: "preview", text: "（預覽題目）", requireImage: false, category: .introspection)
+    )
 }
