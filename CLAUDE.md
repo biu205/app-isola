@@ -35,7 +35,7 @@ isola_test/
 ## Architecture
 
 ### App Entry Point
-`Content/page/ContentView.swift` — contains the real `@main struct YourApp` that initialises Firebase and hosts the `ModelContainer`. `Content/isola_testApp.swift` is an older duplicate entry point that is **not** the active `@main`.
+`Content/page/ContentView.swift` — contains `@main struct YourApp`, which initialises Firebase and hosts the `ModelContainer`.
 
 ### Tab Structure (`ContentView`)
 | Tab | View | Purpose |
@@ -83,12 +83,12 @@ The Health feature is a self-contained stack:
 
 ### Key Types (Journaling)
 - `JournalQuestion` — SwiftData `@Model`; synced from Firestore; use `.category` computed property (not raw `categoryRawValue`)
-- `DiaryEntry` — SwiftData `@Model`; `type` is one of `"daily"` / `"introspection"` / `"freeNote"` / `"duqChat"`; `moodIndex` is `nil` for freeNote entries; has a cascade-delete `mediaItems: [DiaryMedia]` relationship
+- `DiaryEntry` — SwiftData `@Model`; `type` is one of `"daily"` / `"introspection"` / `"freeNote"` / `"duqChat"`; `moodIndex` is `nil` for freeNote entries, otherwise 0–4 (maps to mood images `["非常不愉快度Ｑ", "不愉快度Ｑ", "度Ｑ", "愉快度Ｑ", "非常愉快度Ｑ"]`); has a cascade-delete `mediaItems: [DiaryMedia]` relationship
 - `DiaryMedia` — SwiftData `@Model`; stores photo/video thumbnail `Data`; inverse relationship to `DiaryEntry`
 - `DailyQuestionManager` — `@Observable`; call `initializeDailyQuestions(modelContext:)` from `.task` on `HomeView`
 - `AppLockManager` — `@Observable` singleton; 4-digit PIN (SHA256 in UserDefaults), Face ID/Touch ID, security-question recovery
 - `AppTheme` — enum (`.light`, `.dark`, `.system`); system mode auto-switches dark at 19:00; stored as `Int` via `@AppStorage("appearanceMode")`
-- `Accessory` — plain struct in `Clothes.swift`; defines unlockable island accessories with `unlockThreshold` (entry count). `accessoryData` is the global array.
+- `Accessory` — plain struct in `Clothes.swift`; defines unlockable island accessories with `unlockThreshold` (entry count). `accessoryData` is the global array. Asset naming: `imageName + "灰"` = grayed locked-state image; `imageName + "小"` = small display variant used in `HomeView`.
 - `SettingView` — presented as a sheet from `HomeView` (not a tab). Navigates via `NavigationLink` to `NotificationSettingView` and `AppLockSettingView`.
 
 ### Theming
@@ -121,3 +121,12 @@ Each view individually reads `@AppStorage("appearanceMode")` and computes `isDar
 - `Color(hex:)` helper is defined at the bottom of `Backpack.swift` — reuse it rather than redefine.
 - All haptics go through `UIImpactFeedbackGenerator` called directly in button actions (no wrapper).
 - HealthKit views consume `HealthDashboardViewModel` via `@Environment` — never create it inside a leaf view.
+- Image assets use Chinese names throughout (e.g. `"花"`, `"眼鏡"`). When adding new assets follow the existing naming scheme; accessor suffixes `"灰"` and `"小"` are load-bearing — see `Accessory.grayImageName` / `displayImageName`.
+
+## Project Skills
+
+These skills are available via the Skill tool and encode project-specific patterns:
+
+- `routing-navigation` — Navigation patterns for this app
+- `swiftui-patterns` — SwiftUI idioms used in this codebase
+- `swift-style-guide` — Swift style conventions

@@ -37,12 +37,7 @@ extension AppTheme {
             return 1
         case .system:
             let hour = calendar.component(.hour, from: date)
-            let minute = calendar.component(.minute, from: date)
-            let timeInHours = Double(hour) + (Double(minute) / 60.0)
-
-            if timeInHours < 18.0 { return 0 }
-            if timeInHours >= 19.0 { return 1 }
-            return timeInHours - 18.0  // 18:00-19:00 平滑過渡
+            return hour >= 19 ? 1.0 : 0.0
         }
     }
 }

@@ -325,7 +325,7 @@ struct SeaSceneView: View {
                 let centerX = size.width / 2
 
                 // --- 海 ---
-                context.opacity = 1.0 - nightOpacity
+                context.opacity = 1.0
                 context.draw(dayBackground, at: CGPoint(x: centerX, y: midY))
                 context.opacity = nightOpacity
                 context.draw(nightBackground, at: CGPoint(x: centerX, y: midY))
