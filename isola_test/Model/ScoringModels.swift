@@ -1,6 +1,44 @@
 import Foundation
 import SwiftUI
 
+// MARK: - Weekly Report Grade
+enum WeeklyGrade: String {
+    case sPlusPlus = "S++"
+    case sPlus     = "S+"
+    case s         = "S"
+    case aPlusPlus = "A++"
+    case aPlus     = "A+"
+    case a         = "A"
+    case b         = "B"
+
+    init(score: Double) {
+        switch score {
+        case 90...:   self = .sPlusPlus
+        case 80..<90: self = .sPlus
+        case 70..<80: self = .s
+        case 60..<70: self = .aPlusPlus
+        case 50..<60: self = .aPlus
+        case 40..<50: self = .a
+        default:      self = .b
+        }
+    }
+
+    var label: String { rawValue }
+
+    var color: Color {
+        switch self {
+        case .sPlusPlus: return Color(hue: 0.12, saturation: 0.85, brightness: 0.82)
+        case .sPlus:     return Color(hue: 0.12, saturation: 0.70, brightness: 0.85)
+        case .s:         return Color(hue: 0.36, saturation: 0.65, brightness: 0.70)
+        case .aPlusPlus: return Color(hue: 0.36, saturation: 0.55, brightness: 0.72)
+        case .aPlus:     return Color(hue: 0.36, saturation: 0.45, brightness: 0.72)
+        case .a:         return Color(hue: 0.36, saturation: 0.35, brightness: 0.72)
+        case .b:         return .gray
+        }
+    }
+}
+
+// MARK: - Health Grade
 enum GradeLevel: String {
     case a, b, c, d, e
 

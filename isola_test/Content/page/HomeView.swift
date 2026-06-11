@@ -6,6 +6,7 @@
 //
 import SwiftUI
 import Combine
+import SwiftData
 
 
 // MARK: - 活躍頁面狀態枚舉
@@ -315,7 +316,6 @@ struct SeaSceneView: View {
                 // 1. 資源解析 (確保所有 Symbol 都已定義)
                 guard let dayBackground = context.resolveSymbol(id: "bg-day"),
                     let nightBackground = context.resolveSymbol(id: "bg-night"),
-                    let island = context.resolveSymbol(id: "island"),
                     let bottle2 = context.resolveSymbol(id: "bottle2"),
                     let bottle = context.resolveSymbol(id: "bottle")
                         

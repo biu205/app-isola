@@ -127,7 +127,7 @@ class AppLockManager {
     private var installSalt: String {
         if let existing = keychainLoad(forKey: "appLock_salt") { return existing }
         var bytes = [UInt8](repeating: 0, count: 32)
-        SecRandomCopyBytes(kSecRandomDefault, bytes.count, &bytes)
+        _ = SecRandomCopyBytes(kSecRandomDefault, bytes.count, &bytes)
         let salt = bytes.map { String(format: "%02x", $0) }.joined()
         keychainSave(salt, forKey: "appLock_salt")
         return salt

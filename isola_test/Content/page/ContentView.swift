@@ -61,6 +61,7 @@ struct ContentView: View {
                         Text("健康")
                     }
                 MoodReportView()
+                    .environment(healthVM)
                     .tabItem {
                         Image("Month_Report")
                         Text("週報")
