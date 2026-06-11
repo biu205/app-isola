@@ -64,7 +64,7 @@ let accessoryData = [
 
 //MARK: - 主頁面
 struct Clothes: View {
-    @State private var userNumber: Int = 5
+    @State private var userNumber: Int = 6
     // 改用 AppStorage 儲存選中的 ID，預設為 -1 表示沒穿戴
     @AppStorage("selectedAccessoryID") private var selectedAccessoryID: Int = -1
     @Environment(\.dismiss) var dismiss

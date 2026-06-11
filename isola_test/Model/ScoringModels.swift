@@ -74,11 +74,11 @@ enum GradeLevel: String {
 
     var color: Color {
         switch self {
-        case .a: return Color(hue: 0.36, saturation: 0.60, brightness: 0.72)
-        case .b: return Color(hue: 0.25, saturation: 0.55, brightness: 0.70)
-        case .c: return Color(hue: 0.10, saturation: 0.70, brightness: 0.88)
-        case .d: return Color(hue: 0.06, saturation: 0.80, brightness: 0.85)
-        case .e: return Color(hue: 0.00, saturation: 0.80, brightness: 0.80)
+        case .a: return Color(hex:"#6DBF55")
+        case .b: return Color(hex:"#E2EF74")
+        case .c: return Color(hex:"#E6DA71")
+        case .d: return Color(hex:"#DC9867")
+        case .e: return Color(hex:"#B05955")
         }
     }
 }
@@ -115,6 +115,15 @@ enum HealthCategoryType: String, CaseIterable, Identifiable {
         case .recoveryAndSleep: return Color(hex: "#F6B595")
         case .oxygenAndTemp:    return Color(hex: "#FCE967")
         case .dailyActivity:    return Color(hex: "#9CBCD9")
+        }
+    }
+
+    func backgroundColor(isDark: Bool) -> Color {
+        switch self {
+        case .cardiovascular:   return isDark ? Color(hex: "#3D4849") : Color(hex: "#E9F1F1")
+        case .recoveryAndSleep: return isDark ? Color(hex: "#4E4139") : Color(hex: "#F5EBE6")
+        case .oxygenAndTemp:    return isDark ? Color(hex: "#514D30") : Color(hex: "#F8F5DF")
+        case .dailyActivity:    return isDark ? Color(hex: "#3C4248") : Color(hex: "#E8ECF1")
         }
     }
 

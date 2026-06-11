@@ -117,7 +117,7 @@ struct HealthScoringEngine {
     // MARK: - Category scores
 
     static func computeS1(hr: Double?, rhr: Double?, hrv: Double?, rr: Double?,
-                          hrvBaseline: Baseline?, rrBaseline: Baseline?) -> Double? {
+        hrvBaseline: Baseline?, rrBaseline: Baseline?) -> Double? {
         var pairs: [(Double, Double)] = []
         if let v = hr  { pairs.append((scoreHR(v), 0.35)) }
         if let v = rhr { pairs.append((scoreRHR(v), 0.25)) }
@@ -127,7 +127,7 @@ struct HealthScoringEngine {
     }
 
     static func computeS2(sleepHours: Double?, hrv: Double?, rhr: Double?,
-                          hrvBaseline: Baseline?, rhrBaseline: Baseline?) -> Double? {
+        hrvBaseline: Baseline?, rhrBaseline: Baseline?) -> Double? {
         let sSleep  = sleepHours.map { scoreSleep($0) }
         let sStress = scoreStress(hrv: hrv, rhr: rhr, hrvBaseline: hrvBaseline, rhrBaseline: rhrBaseline)
         switch (sSleep, sStress) {
@@ -161,7 +161,7 @@ struct HealthScoringEngine {
     }
 
     static func computeTotal(s1: Double?, s2: Double?, s3: Double?, s4: Double?,
-                             spo2: Double?, rhr: Double?) -> Double? {
+        spo2: Double?, rhr: Double?) -> Double? {
         var pairs: [(Double, Double)] = []
         if let v = s1 { pairs.append((v, 0.30)) }
         if let v = s2 { pairs.append((v, 0.30)) }

@@ -8,6 +8,7 @@ struct HealthHomeView: View {
     private var isDark: Bool { currentTheme.colorScheme == .dark }
     private var pageBackground: Color { isDark ? Color(hex: "#151D2B") : Color(hex: "#FDFBF0") }
 
+// MARK: - View
     var body: some View {
         NavigationStack {
             ScrollView {
@@ -34,7 +35,7 @@ struct HealthHomeView: View {
             aiConsentSheet
         }
     }
-
+// MARK: - 隱私允許
     private var aiConsentBanner: some View {
         Button {
             showAIConsentSheet = true
@@ -100,7 +101,7 @@ struct HealthHomeView: View {
     }
 
 
-    // MARK: - Overall section
+    // MARK: - 整體評分
     private var overallSection: some View {
         let overall = vm.overallScore
         return VStack(spacing: 6) {
@@ -121,9 +122,9 @@ struct HealthHomeView: View {
                 HStack(alignment: .firstTextBaseline, spacing: 6) {
                     Text(" ")
                     Text("\(Int(score.rounded()))")
-                        .font(.system(size: 48, weight: .bold, design: .rounded))
+                        .font(.system(size: 44, weight: .semibold, design: .rounded))
                     Text("分")
-                        .font(.title3)
+                        .font(.system(size: 24, weight: .semibold))
                         .foregroundStyle(.secondary)
                 }
             }
@@ -132,12 +133,12 @@ struct HealthHomeView: View {
                 HStack(spacing: 6) {
                     ProgressView().scaleEffect(0.75)
                     Text("分析中…")
-                        .font(.subheadline)
+                        .font(.system(size: 16, weight: .semibold))
                         .foregroundStyle(.secondary)
                 }
             } else {
                 Text(vm.aiSuggestion ?? overall.feedbackText)
-                    .font(.title3)
+                    .font(.system(size: 16, weight: .semibold))
                     .foregroundStyle(.secondary)
                     .multilineTextAlignment(.center)
                     .padding(.horizontal, 24)
@@ -151,7 +152,7 @@ struct HealthHomeView: View {
         .clipShape(RoundedRectangle(cornerRadius: 24))
     }
 
-    // MARK: - Category cards
+    // MARK: - 資訊卡
 
     private var categorySection: some View {
         VStack(spacing: 14) {

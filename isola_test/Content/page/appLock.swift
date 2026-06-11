@@ -192,23 +192,25 @@ class AppLockManager {
 
 private struct PinDotsView: View {
     let count: Int
-    private let total = 4
 
     var body: some View {
         HStack(spacing: 20) {
-            ForEach(0..<total, id: \.self) { i in
-                if i < count {
-                    Image("度Ｑ1")
-                        .resizable()
-                        .scaledToFit()
-                        .frame(width: 30, height: 30)
-                } else {
-                    Circle()
-                        .fill(Color.clear)
-                        .frame(width: 30, height: 30)
-                        .overlay(Circle().stroke(Color.primary, lineWidth: 1.5))
-                }
-            }
+            dot(0); dot(1); dot(2); dot(3)
+        }
+    }
+
+    @ViewBuilder
+    private func dot(_ index: Int) -> some View {
+        if index < count {
+            Image("度Ｑ1")
+                .resizable()
+                .scaledToFit()
+                .frame(width: 30, height: 30)
+        } else {
+            Circle()
+                .fill(Color.clear)
+                .frame(width: 30, height: 30)
+                .overlay(Circle().stroke(Color(hex: "#B3DA69"), lineWidth: 1.5))
         }
     }
 }
@@ -668,7 +670,7 @@ struct AppLockSetupView: View {
             VStack(alignment: .leading, spacing: 8) {
                 Text("選擇問題").font(.caption).foregroundColor(.secondary)
                 Picker("安全問題", selection: $selectedQuestion) {
-                    ForEach(AppLockManager.questions.indices, id: \.self) { i in
+                    ForEach(AppLockManager.questions.indices) { i in
                         Text(AppLockManager.questions[i]).tag(i)
                     }
                 }

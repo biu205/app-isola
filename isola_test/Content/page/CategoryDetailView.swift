@@ -4,6 +4,12 @@ import SwiftUI
 struct CategoryDetailView: View {
     let category: HealthCategoryType
     @Environment(HealthDashboardViewModel.self) private var vm
+    @AppStorage("appearanceMode") private var appearanceMode: Int = AppTheme.system.rawValue
+
+    private var isDark: Bool {
+        let theme = AppTheme(rawValue: appearanceMode) ?? .system
+        return theme.colorScheme == .dark
+    }
 
     var body: some View {
         ScrollView {
@@ -12,12 +18,12 @@ struct CategoryDetailView: View {
                 ForEach(category.metrics, id: \.self) { metric in
                     metricCard(metric)
                 }
-                
+
             }
             .padding(.horizontal, 16)
             .padding(.bottom, 32)
         }
-        .background(Color(.systemGroupedBackground))
+        .background(category.backgroundColor(isDark: isDark))
         .navigationTitle(category.displayName)
         .navigationBarTitleDisplayMode(.inline)
     }
@@ -29,7 +35,7 @@ struct CategoryDetailView: View {
         return HStack(spacing: 20) {
             VStack(alignment: .leading, spacing: 4) {
                 Text(category.subtitle)
-                    .font(.caption)
+                    .font(.system(size: 15))
                     .foregroundStyle(Color.black.opacity(0.85))
 
                 if let score = catScore?.score {

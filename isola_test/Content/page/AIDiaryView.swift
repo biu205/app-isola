@@ -14,7 +14,8 @@ struct WeeklyReportStoryView: View {
     let weekEnd: Date
     let qaEntries: [DiaryEntry]        // daily + introspection + duqChat
     let freeNoteCount: Int
-    let dailyMoods: [Double?]          // 7 values Mon-Sun
+    let dailyMoods: [Double?]          // 7 values Mon-Sun (all types, for Page2)
+    let qaDailyMoods: [Double?]        // 7 values Mon-Sun (daily/introspection only, for Page6)
 
     @Environment(\.dismiss) private var dismiss
     @Environment(HealthDashboardViewModel.self) private var healthVM
@@ -154,8 +155,8 @@ struct WeeklyReportStoryView: View {
                     .padding(.bottom, 18)
                 }
             }
-            .ignoresSafeArea()
-        }
+            }
+        .ignoresSafeArea()
         .navigationBarBackButtonHidden(true)
         .toolbar(.hidden, for: .navigationBar)
         .onReceive(ticker) { _ in
@@ -178,6 +179,7 @@ struct WeeklyReportStoryView: View {
         case 2:
             Page4HealthView(
                 weekLabel: weekLabel,
+                weekStart: weekStart,
                 sleepSessions: weekSleep,
                 stepSamples: weekSteps,
                 avgSleepHours: avgSleepHours,
@@ -188,7 +190,7 @@ struct WeeklyReportStoryView: View {
         case 4:
             Page6RecapView(
                 qaCount: qaAnsweredCount,
-                dailyMoods: dailyMoods,
+                dailyMoods: qaDailyMoods,
                 grade: weeklyGrade,
                 freeNoteCount: freeNoteCount,
                 duqChatCount: duqChatCount,
@@ -278,14 +280,16 @@ struct Page2MoodView: View {
             VStack(alignment: .leading, spacing: 6) {
                 Text("這週的你")
                     .font(.system(size: 34, weight: .bold))
+                    .foregroundColor(.black)
                 HStack {
                     Spacer()
                     Text("是隻\(moodLabel)度Ｑ")
-                        .font(.system(size: 20))
+                        .font(.system(size: 23))
+                        .foregroundColor(.black)
                 }
             }
             .padding(.horizontal, 28)
-            .padding(.top, 72)
+            .padding(.top, 150)
         }
     }
 }
@@ -304,17 +308,12 @@ struct Page3SummaryView: View {
         ZStack {
             bg.ignoresSafeArea()
 
-            VStack(spacing: 0) {
-                Text(weekLabel)
-                    .font(.custom("Georgia", size: 16))
-                    .foregroundColor(Color(hex: "#C69C55"))
-                    .padding(.top, 80)
-
+            VStack(alignment: .leading, spacing: 0) {
                 Text("這週發生什麼事呢")
                     .font(.system(size: 26, weight: .bold))
-                    .padding(.top, 14)
-
-                Spacer()
+                    .padding(.top, 200)
+                    .padding(.horizontal, 28)
+                    .padding(.bottom, 35)
 
                 if isLoading {
                     VStack(spacing: 12) {
@@ -324,16 +323,19 @@ struct Page3SummaryView: View {
                             .font(.system(size: 14))
                             .foregroundColor(.secondary)
                     }
+                    .frame(maxWidth: .infinity)
                 } else {
                     Text(summary ?? "")
                         .font(.system(size: 17))
                         .lineSpacing(9)
                         .multilineTextAlignment(.leading)
-                        .padding(.horizontal, 36)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .padding(.horizontal, 28)
                 }
 
                 Spacer()
-                    .frame(height: 72)
+
+                Spacer().frame(height: 80)
             }
         }
     }
@@ -343,6 +345,7 @@ struct Page3SummaryView: View {
 
 struct Page4HealthView: View {
     let weekLabel: String
+    let weekStart: Date
     let sleepSessions: [SleepSession]
     let stepSamples: [HealthSample]
     let avgSleepHours: Double?
@@ -352,6 +355,13 @@ struct Page4HealthView: View {
     private var bg: Color { cs == .dark ? Color(hex: "#151D2B") : Color(hex: "#FDFBF0") }
     private var cardBg: Color { cs == .dark ? Color(white: 0.14) : Color(white: 1.0).opacity(0.85) }
 
+    private struct DaySlot: Identifiable {
+        let id: Int
+        let label: String
+        let value: Double
+        let hasData: Bool
+    }
+
     private func shortDay(_ date: Date) -> String {
         let f = DateFormatter()
         f.dateFormat = "EEE"
@@ -359,38 +369,63 @@ struct Page4HealthView: View {
         return f.string(from: date)
     }
 
+    private var sleepSlots: [DaySlot] {
+        let cal = Calendar.current
+        return (0..<7).map { i in
+            let dayStart = cal.date(byAdding: .day, value: i, to: weekStart) ?? weekStart
+            let dayEnd   = cal.date(byAdding: .day, value: 1, to: dayStart) ?? dayStart
+            let label    = shortDay(dayStart)
+            let sessions = sleepSessions.filter { $0.date >= dayStart && $0.date < dayEnd }
+            guard !sessions.isEmpty else { return DaySlot(id: i, label: label, value: 0, hasData: false) }
+            let avg = sessions.map(\.totalHours).reduce(0, +) / Double(sessions.count)
+            return DaySlot(id: i, label: label, value: avg, hasData: true)
+        }
+    }
+
+    private var stepSlots: [DaySlot] {
+        let cal = Calendar.current
+        return (0..<7).map { i in
+            let dayStart = cal.date(byAdding: .day, value: i, to: weekStart) ?? weekStart
+            let dayEnd   = cal.date(byAdding: .day, value: 1, to: dayStart) ?? dayStart
+            let label    = shortDay(dayStart)
+            let samples  = stepSamples.filter { $0.date >= dayStart && $0.date < dayEnd }
+            guard !samples.isEmpty else { return DaySlot(id: i, label: label, value: 0, hasData: false) }
+            let total = samples.map(\.value).reduce(0, +)
+            return DaySlot(id: i, label: label, value: total, hasData: true)
+        }
+    }
+
     var body: some View {
         ZStack {
             bg.ignoresSafeArea()
 
             VStack(spacing: 16) {
-                Text(weekLabel)
-                    .font(.custom("Georgia", size: 16))
-                    .foregroundColor(Color(hex: "#C69C55"))
-                    .padding(.top, 72)
 
                 // Sleep section
                 if let avg = avgSleepHours {
                     Text("這一週你平均睡了 \(String(format: "%.1f", avg)) 小時！")
-                        .font(.system(size: 16, weight: .medium))
+                        .font(.system(size: 20, weight: .bold))
+                        .padding(.top, 35)
                 } else {
                     Text("這一週睡眠資料不足")
-                        .font(.system(size: 16))
+                        .font(.system(size: 20))
                         .foregroundColor(.secondary)
+                        .padding(.top, 35)
+
                 }
 
                 VStack(alignment: .leading, spacing: 8) {
                     Label("近 7 晚趨勢", systemImage: "chart.bar.fill")
                         .font(.system(size: 13, weight: .medium))
-                        .foregroundColor(.secondary)
+                        .foregroundColor(Color(hex: "#9B85D9"))
 
                     Chart {
-                        ForEach(sleepSessions) { s in
+                        ForEach(sleepSlots) { slot in
                             BarMark(
-                                x: .value("日", shortDay(s.date)),
-                                y: .value("時", s.totalHours)
+                                x: .value("日", slot.label),
+                                y: .value("時", slot.value)
                             )
-                            .foregroundStyle(Color(hex: "#9B85D9"))
+                            .foregroundStyle(slot.hasData ? Color(hex: "#9B85D9") : Color.gray.opacity(0.25))
                             .cornerRadius(5)
                         }
                     }
@@ -416,28 +451,28 @@ struct Page4HealthView: View {
                     : "這一週步數資料不足"
 
                 Text(stepsLabel)
-                    .font(.system(size: 16, weight: .medium))
-
+                        .font(.system(size: 20, weight: .bold))
+                        .padding(.top, 25)
                 VStack(alignment: .leading, spacing: 8) {
                     HStack {
                         Label("步數", systemImage: "figure.walk")
                             .font(.system(size: 13, weight: .medium))
                             .foregroundColor(.green)
                         Spacer()
-                        if let last = stepSamples.last {
-                            Text("\(Int(last.value))步")
+                        if totalSteps > 0 {
+                            Text("\(totalSteps)步")
                                 .font(.system(size: 13, weight: .bold))
                                 .foregroundColor(.green)
                         }
                     }
 
                     Chart {
-                        ForEach(stepSamples) { s in
+                        ForEach(stepSlots) { slot in
                             BarMark(
-                                x: .value("日", shortDay(s.date)),
-                                y: .value("步", s.value)
+                                x: .value("日", slot.label),
+                                y: .value("步", slot.value)
                             )
-                            .foregroundStyle(Color.green.opacity(0.65))
+                            .foregroundStyle(slot.hasData ? Color.green.opacity(0.65) : Color.gray.opacity(0.25))
                             .cornerRadius(5)
                         }
                     }
@@ -477,20 +512,13 @@ struct Page5ScoreView: View {
         ZStack {
             bg.ignoresSafeArea()
 
-            VStack(spacing: 20) {
-                Text(weekLabel)
-                    .font(.custom("Georgia", size: 16))
-                    .foregroundColor(Color(hex: "#C69C55"))
-                    .padding(.top, 80)
-
-                Spacer()
-
+            VStack(spacing: 24) {
                 Text("你這週的生理分數是")
                     .font(.system(size: 20, weight: .bold))
 
                 if let g = grade {
                     Text(g.label)
-                        .font(.system(size: 100, weight: .bold))
+                        .font(.system(size: 150, weight: .bold))
                         .foregroundColor(g.color)
                         .minimumScaleFactor(0.5)
                         .lineLimit(1)
@@ -505,10 +533,8 @@ struct Page5ScoreView: View {
                     .foregroundColor(.secondary)
                     .multilineTextAlignment(.center)
                     .padding(.horizontal, 40)
-
-                Spacer()
-                    .frame(height: 72)
             }
+            .frame(maxWidth: .infinity)
         }
     }
 }
@@ -529,13 +555,9 @@ struct Page6RecapView: View {
 
     private func moodImg(_ mood: Double?) -> String {
         guard let m = mood else { return "空白沒寫度Ｑ" }
-        switch m {
-        case ..<1.0:    return "非常不愉快度Ｑ"
-        case 1.0..<2.0: return "不愉快度Ｑ"
-        case 2.0..<3.0: return "度Ｑ"
-        case 3.0..<4.0: return "愉快度Ｑ"
-        default:         return "非常愉快度Ｑ"
-        }
+        let names = ["非常不愉快度Ｑ", "不愉快度Ｑ", "度Ｑ", "愉快度Ｑ", "非常愉快度Ｑ"]
+        let index = max(0, min(4, Int(m.rounded())))
+        return names[index]
     }
 
     var body: some View {
@@ -543,7 +565,7 @@ struct Page6RecapView: View {
             bg.ignoresSafeArea()
 
             ScrollView(showsIndicators: false) {
-                VStack(spacing: 20) {
+                VStack(spacing: 24) {
                     Spacer().frame(height: 56)
 
                     Text("在這週裡：")
@@ -551,23 +573,24 @@ struct Page6RecapView: View {
                         .frame(maxWidth: .infinity, alignment: .center)
 
                     // Summary box
-                    VStack(spacing: 18) {
+                    VStack(spacing: 22) {
                         // QA count + mood row
-                        VStack(alignment: .leading, spacing: 10) {
+                        VStack(spacing: 12) {
                             Text("回答了 \(qaCount) 個問題")
-                                .font(.system(size: 15, weight: .medium))
+                                .font(.system(size: 16, weight: .medium))
 
-                            HStack(spacing: 2) {
+                            HStack(spacing: 4) {
                                 ForEach(0..<7, id: \.self) { i in
                                     let mood = i < dailyMoods.count ? dailyMoods[i] : nil
                                     Image(moodImg(mood))
                                         .resizable()
                                         .scaledToFit()
-                                        .frame(width: 38, height: 38)
+                                        .frame(width: 44, height: 44)
                                 }
                             }
+                            .frame(maxWidth: .infinity, alignment: .center)
                         }
-                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .frame(maxWidth: .infinity, alignment: .center)
 
                         Divider()
 
@@ -579,7 +602,7 @@ struct Page6RecapView: View {
 
                             if let g = grade {
                                 Text(g.label)
-                                    .font(.system(size: 64, weight: .bold))
+                                    .font(.system(size: 72, weight: .bold))
                                     .foregroundColor(g.color)
                             } else {
                                 Text("—")
@@ -591,28 +614,30 @@ struct Page6RecapView: View {
 
                         Divider()
 
-                        // Bottom row
-                        HStack(alignment: .top) {
-                            VStack(spacing: 6) {
-                                Text("搜集了 \(freeNoteCount) 個浮標")
-                                    .font(.system(size: 13, weight: .medium))
+                        // Bottom row — centered
+                        HStack(spacing: 40) {
+                            VStack(spacing: 8) {
                                 Image("浮標")
                                     .resizable()
                                     .scaledToFit()
-                                    .frame(width: 36, height: 36)
-                            }
-                            Spacer()
-                            VStack(spacing: 6) {
-                                Text("和度Ｑ聊天 \(duqChatCount) 次")
+                                    .frame(width: 54, height: 54)
+                                Text("搜集了 \(freeNoteCount) 個浮標")
                                     .font(.system(size: 13, weight: .medium))
+                                    .multilineTextAlignment(.center)
+                            }
+                            VStack(spacing: 8) {
                                 Image("度Ｑ")
                                     .resizable()
                                     .scaledToFit()
-                                    .frame(width: 36, height: 36)
+                                    .frame(width: 54, height: 54)
+                                Text("和度Ｑ聊天 \(duqChatCount) 次")
+                                    .font(.system(size: 13, weight: .medium))
+                                    .multilineTextAlignment(.center)
                             }
                         }
+                        .frame(maxWidth: .infinity, alignment: .center)
                     }
-                    .padding(20)
+                    .padding(24)
                     .background(
                         RoundedRectangle(cornerRadius: 18)
                             .fill(cardBg)
@@ -621,7 +646,7 @@ struct Page6RecapView: View {
                                     .stroke(Color(hex: "#C69C55"), lineWidth: 1.5)
                             )
                     )
-                    .padding(.horizontal, 24)
+                    .padding(.horizontal, 16)
 
                     // Message
                     VStack(spacing: 2) {
@@ -645,6 +670,7 @@ struct Page6RecapView: View {
 
                     Spacer().frame(height: 72)
                 }
+                .padding(.top, 90)
             }
         }
     }
@@ -657,7 +683,8 @@ struct Page6RecapView: View {
             weekEnd: Date().addingTimeInterval(7 * 86400),
             qaEntries: [],
             freeNoteCount: 2,
-            dailyMoods: [3.0, nil, 1.5, 4.0, 2.0, nil, 3.5]
+            dailyMoods: [3.0, nil, 1.5, 4.0, 2.0, nil, 3.5],
+            qaDailyMoods: [3.0, nil, nil, 4.0, nil, nil, 3.5]
         )
         .environment(HealthDashboardViewModel())
     }

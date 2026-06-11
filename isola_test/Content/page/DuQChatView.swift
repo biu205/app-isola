@@ -63,7 +63,7 @@ final class DuQChatViewModel {
     說話風格：用台灣中文口語，親切自然、偶爾幽默，像朋友在傳LINE訊息。
     每次回覆只說 2-3 句話，不要太長。
     根據用戶說的話自然接話，不要重複問同樣的問題。
-    並且在對話中慢慢引導用戶分享更多，讓聊天內容豐富一點，這樣最後幫他寫的日記才會有料又有感情。
+    並且在對話中慢慢引導用戶分享更多，讓聊天內容豐富一點，這樣最後幫他寫的日記才會有感情且豐富。
     另外如果一個話題聊大概來回三句後，就可以引導用戶分享自己當日的更多事情。
     如果用戶聊天的內容不合理、不道德、不適當就委婉的跟他說我們聊聊其他的東西。
     在對話過程中不要提到你是AI或是度Q，保持神秘感，讓用戶覺得你就是一個可愛的島嶼朋友。
@@ -574,10 +574,10 @@ struct DuQChatView: View {
 
                 Spacer().frame(height: 20)
 
-                // 心情選擇（AI推測，可修改）
+                // 心情選擇
                 VStack(spacing: 8) {
                     Text("度Q幫你推測的心情，可以調整喔")
-                        .font(.system(size: 15, design: .serif))
+                        .font(.system(size: 15, weight: .bold, design: .serif))
                         .foregroundColor(.white.opacity(0.8))
 
                     HStack(spacing: 13) {

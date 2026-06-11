@@ -22,7 +22,7 @@ struct Backpack: View {
     private var isDark: Bool { currentTheme.colorScheme == .dark }
     private var pageBackground: Color { isDark ? Color(hex: "#151D2B") : Color(hex: "#FDFBF0") }
 
-    let moodImages = ["非常不愉快度Ｑ", "不愉快度Ｑ", "度Ｑ", "愉快度Ｑ", "非常愉快度Ｑ"]
+    let moodImages = ["非常不愉快度Ｑ1", "不愉快度Ｑ1", "度Ｑ1", "愉快度Ｑ1", "非常愉快度Ｑ1"]
     let moodNames = ["非常不愉快", "不愉快", "一般", "愉快", "非常愉快"]
     let emptyMoodImage = "空白沒寫度Ｑ"
     let futureMoodImage = "還沒到度Ｑ"
@@ -126,7 +126,7 @@ private extension Backpack {
     var diarySectionHeader: some View {
         HStack {
             Text(diarySectionTitle)
-                .font(.system(.headline, design: .serif))
+                .font(.system(.title3, design: .serif,weight: .bold))
                 .foregroundColor(.primary)
 
             Spacer()
@@ -139,9 +139,9 @@ private extension Backpack {
             } label: {
                 HStack(spacing: 4) {
                     Image(systemName: sortOrder == .byTime ? "clock" : "square.stack")
-                        .font(.system(size: 12))
+                        .font(.system(size: 15))
                     Text(sortOrder == .byTime ? "時間" : "類型")
-                        .font(.system(size: 12))
+                        .font(.system(size: 15))
                 }
                 .foregroundColor(.primary.opacity(0.6))
                 .padding(.horizontal, 10)
@@ -150,7 +150,8 @@ private extension Backpack {
             }
             .buttonStyle(.plain)
         }
-        .padding(.bottom, 12)
+        .padding(.bottom, 20)
+        .padding(.vertical, 8)
     }
 
     var diarySection: some View {
@@ -526,8 +527,13 @@ private extension Backpack {
 
         UIImpactFeedbackGenerator(style: .light).impactOccurred()
         withAnimation(.spring(response: 0.3, dampingFraction: 0.8)) {
-            showAllEntries = false
-            selectedCalendarDate = targetDay
+            if let selected = selectedCalendarDate, calendar.isDate(selected, inSameDayAs: targetDay) {
+                selectedCalendarDate = nil
+                showAllEntries = false
+            } else {
+                showAllEntries = false
+                selectedCalendarDate = targetDay
+            }
         }
     }
 

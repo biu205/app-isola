@@ -9,6 +9,7 @@ struct ArcGaugeView: View {
     private let totalArc: Double   = 240     // degrees
 
     var body: some View {
+     
         GeometryReader { geo in
             let size = min(geo.size.width, geo.size.height)
             let lineWidth = size * 0.13
@@ -30,7 +31,6 @@ struct ArcGaugeView: View {
                             style: StrokeStyle(lineWidth: lineWidth, lineCap: .round)
                         )
                         .rotationEffect(.degrees(startAngle))
-                        .animation(.easeOut(duration: 0.8), value: s)
                 }
 
                 // Labels
@@ -50,8 +50,8 @@ struct ArcGaugeView: View {
                             .foregroundStyle(.primary.opacity(0.75))
                     }
                 }
+
             }
-            .frame(width: size, height: size)
         }
     }
 }
