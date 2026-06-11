@@ -17,6 +17,8 @@ struct Backpack: View {
     @State private var selectedCalendarDate: Date? = nil
     @State private var showAllEntries: Bool = false
     @State private var sortOrder: DiaryListSortOrder = .byTime
+    @AppStorage("hasSeenBackpackOnboarding") private var hasSeenBackpackOnboarding: Bool = false
+    @State private var showBackpackOnboarding = false
 
     private var currentTheme: AppTheme { AppTheme(rawValue: appearanceMode) ?? .system }
     private var isDark: Bool { currentTheme.colorScheme == .dark }
@@ -98,7 +100,26 @@ struct Backpack: View {
             .presentationDetents([.height(320)])
             .presentationDragIndicator(.visible)
         }
+        .onAppear {
+            if !hasSeenBackpackOnboarding {
+                showBackpackOnboarding = true
+            }
+        }
+        .fullScreenCover(isPresented: $showBackpackOnboarding) {
+            OnboardingView(pages: backpackOnboardingPages) {
+                hasSeenBackpackOnboarding = true
+                showBackpackOnboarding = false
+            }
+        }
     }
+
+    private let backpackOnboardingPages: [OnboardingPage] = [
+        OnboardingPage(imageName: "backpack-0", text: "這是我們的背包頁面，\n會記錄我們的所有一切！"),
+        OnboardingPage(imageName: "backpack-1", text: "你可以利用左右按鈕查看其他月份！\n也可以點擊月份挑選你想看的時間！\n快速點兩下可以回到今天！"),
+        OnboardingPage(imageName: "backpack-2", text: "點擊一下你想看的日期，\n你可以只看到當天的所有內容，\n再次點擊一下，\n就可以顯示我們所有有過的紀錄喔！"),
+        OnboardingPage(imageName: "backpack-3", text: "另外你可以點這個按鈕！\n讓紀錄依照不同種類整理！"),
+        OnboardingPage(imageName: "backpack-0", text: "你可以利用底下的日記列表！\n更改你的日記喔！\n但要注意你不能補寫日記，\n畢竟這樣就沒意義了嘛～"),
+    ]
 
     func deleteEntry(_ entry: DiaryEntry) {
         UIImpactFeedbackGenerator(style: .rigid).impactOccurred()

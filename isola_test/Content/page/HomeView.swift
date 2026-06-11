@@ -22,6 +22,8 @@ struct HomeView: View {
     @State private var activeSheet: ActiveSheet? = nil
     @State private var isHidingTopButtons = false
     @State private var showDuQChat = false
+    @AppStorage("hasSeenHomeOnboarding") private var hasSeenHomeOnboarding: Bool = false
+    @State private var showHomeOnboarding = false
     @AppStorage("appearanceMode") private var appearanceMode: Int = AppTheme.system.rawValue
     // 讀取換裝頁儲存的 ID
     @AppStorage("selectedAccessoryID") private var selectedAccessoryID: Int = -1
@@ -270,6 +272,9 @@ struct HomeView: View {
                 }
             .onAppear {
                 bottleOpacity = (bottleAnsweredDateStr == todayDateString) ? 0.0 : 1.0
+                if !hasSeenHomeOnboarding {
+                    showHomeOnboarding = true
+                }
             }
             .onReceive(Timer.publish(every: 60, on: .main, in: .common).autoconnect()) { _ in
                 // 新的一天到來時恢復瓶子，並重新抽取題目
@@ -290,9 +295,25 @@ struct HomeView: View {
             .fullScreenCover(isPresented: $showDuQChat) {
                 DuQChatView()
             }
+            .fullScreenCover(isPresented: $showHomeOnboarding) {
+                OnboardingView(pages: homeOnboardingPages) {
+                    hasSeenHomeOnboarding = true
+                    showHomeOnboarding = false
+                }
+            }
         }
     }
 
+
+    private let homeOnboardingPages: [OnboardingPage] = [
+        OnboardingPage(imageName: "home-0", text: "你好！\n歡迎來到 isola ！"),
+        OnboardingPage(imageName: "home-0", text: "我叫做度Ｑ，\n是一座在海上漂流的島嶼。"),
+        OnboardingPage(imageName: "home-1", text: "每天午夜 12 點後，\n都會飄來兩個瓶子！\n你可以每天挑其中一個瓶子回答問題！"),
+        OnboardingPage(imageName: "home-2", text: "這是浮標！他每天都在這陪我～\n隨時都可以聽我們想分享的事情或者想法～"),
+        OnboardingPage(imageName: "home-3", text: "這是我！度Ｑ！\n我可以陪你聊天然後幫你寫日記！！\n要多來找我聊天喔！"),
+        OnboardingPage(imageName: "home-4", text: "這個是我的衣櫥還有設定頁面"),
+        OnboardingPage(imageName: "home-0", text: "這就是基本的內容了！\n讓我們一起度過在isola美好的每一天吧！！"),
+    ]
 
     // 觸覺反饋函數
     private func triggerHaptic(style: UIImpactFeedbackGenerator.FeedbackStyle) {
