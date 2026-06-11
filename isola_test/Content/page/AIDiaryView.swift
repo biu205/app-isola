@@ -216,6 +216,12 @@ struct WeeklyReportStoryView: View {
     // MARK: - Gemini
 
     private func loadGeminiContent() async {
+        let cal = Calendar.current
+        guard Set(qaEntries.map { cal.startOfDay(for: $0.date) }).count >= 3 else {
+            isLoadingGemini = false
+            return
+        }
+
         let gemini = GeminiService()
 
         let entriesText = qaEntries.prefix(20).map {

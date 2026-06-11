@@ -28,8 +28,8 @@ struct MoodReportView: View {
     private var weekStart: Date { weekInterval.start }
     private var weekEnd: Date   { weekInterval.end }
 
-    // Entries that count toward unlock (not freeNote)
-    private var weeklyQAEntries: [DiaryEntry] {
+    // All QA entries this week (used for day counting and subtitle)
+    private var rawQAEntries: [DiaryEntry] {
         allEntries.filter {
             $0.date >= weekStart && $0.date < weekEnd &&
             ($0.type == "daily" || $0.type == "introspection" || $0.type == "duqChat")
@@ -44,10 +44,15 @@ struct MoodReportView: View {
 
     private var qualifyingDays: Int {
         let cal = Calendar.current
-        return Set(weeklyQAEntries.map { cal.startOfDay(for: $0.date) }).count
+        return Set(rawQAEntries.map { cal.startOfDay(for: $0.date) }).count
     }
 
     private var isUnlocked: Bool { qualifyingDays >= 3 }
+
+    // Gated: returns [] when fewer than 3 qualifying days
+    private var weeklyQAEntries: [DiaryEntry] {
+        isUnlocked ? rawQAEntries : []
+    }
 
     // 7 values (nil = no entry that day), Mon-Sun
     private var weeklyDailyMoods: [Double?] {
@@ -76,7 +81,7 @@ struct MoodReportView: View {
                         VStack(alignment: .leading, spacing: 6) {
                             Text("心情週報")
                                 .font(.system(size: 28, weight: .bold))
-                            Text("在這一週裡，共回答了\(weeklyQAEntries.count)個問題")
+                            Text("在這一週裡，共回答了\(rawQAEntries.count)個問題")
                                 .font(.system(size: 16))
                                 .foregroundColor(.secondary)
                         }.padding(.top, 24)
