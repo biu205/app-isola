@@ -8,6 +8,7 @@
 
 /* Begin PBXBuildFile section */
 		503B1CEC2FCC2795006861A0 /* FirebaseAnalytics in Frameworks */ = {isa = PBXBuildFile; productRef = 503B1CEB2FCC2795006861A0 /* FirebaseAnalytics */; };
+		505811052FDA8BE900C5F1E7 /* GoogleService-Info.plist in Resources */ = {isa = PBXBuildFile; fileRef = 505811042FDA8BE900C5F1E7 /* GoogleService-Info.plist */; };
 		50A71FC22FCF0F9900BBFF72 /* FirebaseFirestore in Frameworks */ = {isa = PBXBuildFile; productRef = 50A71FC12FCF0F9900BBFF72 /* FirebaseFirestore */; };
 /* End PBXBuildFile section */
 
@@ -25,6 +26,7 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
+		505811042FDA8BE900C5F1E7 /* GoogleService-Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = "GoogleService-Info.plist"; sourceTree = "<group>"; };
 		5064AFF42F7A53B900EE48F4 /* isola_test.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = isola_test.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		97EF05172FD843E1008BC178 /* SwiftUI.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = SwiftUI.framework; path = System/Library/Frameworks/SwiftUI.framework; sourceTree = SDKROOT; };
 /* End PBXFileReference section */
@@ -68,6 +70,7 @@
 		5064AFEB2F7A53B900EE48F4 = {
 			isa = PBXGroup;
 			children = (
+				505811042FDA8BE900C5F1E7 /* GoogleService-Info.plist */,
 				5064AFF62F7A53B900EE48F4 /* isola_test */,
 				50A71FC02FCF0F9900BBFF72 /* Frameworks */,
 				5064AFF52F7A53B900EE48F4 /* Products */,
@@ -160,6 +163,7 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				505811052FDA8BE900C5F1E7 /* GoogleService-Info.plist in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -305,7 +309,7 @@
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEAD_CODE_STRIPPING = YES;
-				DEVELOPMENT_TEAM = SV3MU85Q9J;
+				DEVELOPMENT_TEAM = 9JYR5Q7CA5;
 				ENABLE_APP_SANDBOX = YES;
 				ENABLE_HARDENED_RUNTIME = YES;
 				ENABLE_PREVIEWS = YES;
@@ -356,7 +360,7 @@
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEAD_CODE_STRIPPING = YES;
-				DEVELOPMENT_TEAM = SV3MU85Q9J;
+				DEVELOPMENT_TEAM = 9JYR5Q7CA5;
 				ENABLE_APP_SANDBOX = YES;
 				ENABLE_HARDENED_RUNTIME = YES;
 				ENABLE_PREVIEWS = YES;

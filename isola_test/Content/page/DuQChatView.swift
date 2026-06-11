@@ -58,6 +58,7 @@ final class DuQChatViewModel {
     private let service = GeminiService()
     private let chatSystemPrompt = """
     你是「度Q」，一座小島，個性溫暖、輕鬆、溫柔體貼但很貼心。
+    第一句用：「你好哇！」作為開頭。
     你的任務是像好朋友一樣陪用戶聊天，關心他今天的生活、感受和發生的事。
     說話風格：用台灣中文口語，親切自然、偶爾幽默，像朋友在傳LINE訊息。
     每次回覆只說 2-3 句話，不要太長。
@@ -291,15 +292,16 @@ struct DuQChatView: View {
                     .frame(width: 90, height: 90)
                     .clipShape(Circle())
                     .padding(.bottom, 20)
-                Text("度Q 陪聊")
-                    .font(.system(size: 26, weight: .bold, design: .serif))
+                Text("度 Q 陪聊")
+                    .font(.system(size: 28, weight: .bold, design: .serif))
                     .foregroundColor(.white)
                 Spacer().frame(height: 14)
-                Text("你的對話內容將透過 Google Gemini 轉換為日記。\n內容不會用於廣告，但請勿分享敏感個資。")
-                    .font(.system(size: 14))
-                    .foregroundColor(.white.opacity(0.8))
+                Text("對話內容將透過 Google Gemini 轉換為日記。\n內容不會用於廣告，但請勿分享敏感個資。")
+                    .font(.system(size: 16))
+                    .foregroundColor(.white.opacity(0.85))
                     .multilineTextAlignment(.center)
                     .padding(.horizontal, 36)
+                    .lineSpacing(3.3)
                 Spacer()
                 VStack(spacing: 12) {
                     Button {
@@ -307,14 +309,14 @@ struct DuQChatView: View {
                         showChatConsent = false
                         Task { await viewModel.startConversation() }
                     } label: {
-                        Text("我了解，開始聊天")
+                        Text("開始聊天！")
                             .font(.headline)
                             .foregroundColor(.black)
                             .frame(maxWidth: .infinity)
                             .padding(.vertical, 16)
-                            .background(Capsule().fill(Color(hex: "#FCE967")))
+                            .background(Capsule().fill(Color(hex: "#FDED82")))
                     }
-                    Button("不了，離開") { dismiss() }
+                    Button("不用了， 離開") { dismiss() }
                         .font(.subheadline)
                         .foregroundColor(.white.opacity(0.6))
                 }
@@ -338,7 +340,7 @@ struct DuQChatView: View {
 
     private var headerBar: some View {
         ZStack {
-            Text("度Q陪聊")
+            Text("度 Q 陪聊")
                 .font(.system(size: 25, weight: .semibold, design: .serif))
                 .foregroundColor(.black)
                 .padding(.top, 12)
@@ -436,7 +438,7 @@ struct DuQChatView: View {
             } label: {
                 Image(systemName: "paperplane.fill")
                     .font(.system(size: 22))
-                    .foregroundColor(Color(hex: "#FCE967"))
+                    .foregroundColor(Color(hex: "#FDED82"))
             }
             .disabled(
                 viewModel.inputText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
@@ -457,7 +459,7 @@ struct DuQChatView: View {
             VStack(spacing: 0) {
                 Spacer()
 
-                Image("度Ｑ1")
+                Image("度Ｑ")
                     .resizable()
                     .scaledToFit()
                     .frame(width: 100, height: 100)
@@ -489,7 +491,7 @@ struct DuQChatView: View {
                             .foregroundColor(.black)
                             .frame(maxWidth: .infinity)
                             .padding(.vertical, 16)
-                            .background(Capsule().fill(Color(hex: "#FCE967")))
+                            .background(Capsule().fill(Color(hex: "#FDED82")))
                     }
 
                     Button {
@@ -498,11 +500,11 @@ struct DuQChatView: View {
                     } label: {
                         Text("結束對話")
                             .font(.headline)
-                            .foregroundColor(Color(hex: "#FCE967"))
+                            .foregroundColor(Color(hex: "#FDED82"))
                             .frame(maxWidth: .infinity)
                             .padding(.vertical, 16)
                             .background(
-                                Capsule().stroke(Color(hex: "#FCE967"), lineWidth: 1.5)
+                                Capsule().stroke(Color(hex: "#FDED82"), lineWidth: 1.5)
                             )
                     }
                 }
@@ -544,14 +546,14 @@ struct DuQChatView: View {
                 Text("度Q日記")
                     .font(.system(size: 24, weight: .semibold, design: .serif))
                     .foregroundColor(.white)
-                    .padding(.top, 60)
+                    .padding(.top, 40)
 
                 Spacer().frame(height: 16)
 
                 Image("度Ｑ")
                     .resizable()
                     .scaledToFit()
-                    .frame(width: 100, height: 100)
+                    .frame(width: 70, height: 70)
                     .clipShape(Circle())
                     .shadow(color: .black.opacity(0.1), radius: 6)
 
@@ -575,10 +577,10 @@ struct DuQChatView: View {
                 // 心情選擇（AI推測，可修改）
                 VStack(spacing: 8) {
                     Text("度Q幫你推測的心情，可以調整喔")
-                        .font(.system(size: 12, design: .serif))
+                        .font(.system(size: 15, design: .serif))
                         .foregroundColor(.white.opacity(0.8))
 
-                    HStack(spacing: 10) {
+                    HStack(spacing: 13) {
                         ForEach(0..<5) { index in
                             Button {
                                 UIImpactFeedbackGenerator(style: .light).impactOccurred()
@@ -589,11 +591,11 @@ struct DuQChatView: View {
                                         .resizable()
                                         .scaledToFit()
                                         .frame(
-                                            width: viewModel.selectedMood == index ? 50 : 38,
-                                            height: viewModel.selectedMood == index ? 50 : 38
+                                            width: viewModel.selectedMood == index ? 53 : 40,
+                                            height: viewModel.selectedMood == index ? 53 : 40
                                         )
                                     Text(moodNames[index])
-                                        .font(.system(size: 9))
+                                        .font(.system(size: 12))
                                         .foregroundColor(.white.opacity(viewModel.selectedMood == index ? 1 : 0.55))
                                 }
                                 .animation(.spring(response: 0.25, dampingFraction: 0.7), value: viewModel.selectedMood)
@@ -698,7 +700,7 @@ private struct TypingIndicatorView: View {
         .padding(.vertical, 12)
         .background(
             RoundedRectangle(cornerRadius: 18, style: .continuous)
-                .fill(Color(hex: "#FCE967"))
+                .fill(Color(hex: "#FDED82"))
         )
         .onAppear { animating = true }
     }

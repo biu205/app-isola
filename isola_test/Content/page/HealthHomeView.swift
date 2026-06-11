@@ -113,7 +113,7 @@ struct HealthHomeView: View {
                     .frame(width: 230, height: 180)
                     // .background(Color.black.opacity(0.9))
             } else {
-                Text("🫀")
+                Text(":0")
                     .font(.system(size: 80))
             }
 
