@@ -162,6 +162,29 @@ struct SettingView: View {
                                     .frame(height: 60)
                                 }
                             }
+
+                            // MARK: - DEBUG ONLY 測試用，正式上線前移除
+                            #if DEBUG
+                            VStack(spacing: 0) {
+                                Divider()
+                                Button {
+                                    UserDefaults.standard.removeObject(forKey: "hasSeenHomeOnboarding")
+                                    UserDefaults.standard.removeObject(forKey: "hasSeenBackpackOnboarding")
+                                } label: {
+                                    HStack {
+                                        Text("重置教學（測試用）")
+                                            .foregroundColor(.orange)
+                                        Spacer()
+                                        Image(systemName: "arrow.counterclockwise")
+                                            .font(.caption)
+                                            .foregroundColor(.orange)
+                                    }
+                                    .padding()
+                                    .frame(height: 60)
+                                }
+                            }
+                            #endif
+                            // MARK: - END DEBUG
                         }
                         .padding(.horizontal)
                     }

@@ -234,6 +234,7 @@ struct DuQChatView: View {
     @State private var viewModel = DuQChatViewModel()
     @AppStorage("aiChatConsent") private var aiChatConsent: Bool = false
     @State private var showChatConsent = false
+    @FocusState private var inputFocused: Bool
 
     private let moodImages = ["非常不愉快度Ｑ", "不愉快度Ｑ", "度Ｑ", "愉快度Ｑ", "非常愉快度Ｑ"]
     private let moodNames  = ["非常不愉快", "不愉快", "普通", "愉快", "非常愉快"]
@@ -428,12 +429,15 @@ struct DuQChatView: View {
                 .padding(.vertical, 10)
                 .background(Color.white.opacity(0.2))
                 .clipShape(Capsule())
+                .focused($inputFocused)
                 .onSubmit {
+                    inputFocused = false
                     Task { await viewModel.sendMessage() }
                 }
 
             Button {
                 UIImpactFeedbackGenerator(style: .light).impactOccurred()
+                inputFocused = false
                 Task { await viewModel.sendMessage() }
             } label: {
                 Image(systemName: "paperplane.fill")
