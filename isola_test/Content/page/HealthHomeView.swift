@@ -30,6 +30,16 @@ struct HealthHomeView: View {
             .overlay { if vm.isLoading { loadingOverlay } }
         }
         .background(pageBackground.ignoresSafeArea())
+        .overlay(alignment: .top) {
+            LinearGradient(
+                colors: [pageBackground, pageBackground.opacity(0)],
+                startPoint: .top,
+                endPoint: .bottom
+            )
+            .frame(height: 80)
+            .ignoresSafeArea(edges: .top)
+            .allowsHitTesting(false)
+        }
         .preferredColorScheme(currentTheme.colorScheme)
         .sheet(isPresented: $showAIConsentSheet) {
             aiConsentSheet

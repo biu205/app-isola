@@ -85,6 +85,16 @@ struct Backpack: View {
                 }
             }
         }
+        .overlay(alignment: .top) {
+            LinearGradient(
+                colors: [pageBackground, pageBackground.opacity(0)],
+                startPoint: .top,
+                endPoint: .bottom
+            )
+            .frame(height: 80)
+            .ignoresSafeArea(edges: .top)
+            .allowsHitTesting(false)
+        }
         .preferredColorScheme(currentTheme.colorScheme)
         .sheet(item: $entryToEdit) { entry in
             EditDiaryView(entry: entry)
